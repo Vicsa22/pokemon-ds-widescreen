@@ -369,7 +369,9 @@ other sizes. Those tables are made once, by a developer with both ROMs, with
 the repository as addresses only (`tools/bw2/IRES.shifts`,
 `tools/soulsilver/soulsilver-es.json`, ...): a download carries the tables of
 the copies whose files were there when it was built, and shows any other
-Spanish copy as NOT PLAYABLE. Nothing of a game goes in the repository.
+Spanish copy as NOT PLAYABLE. Nothing of a game goes in the repository. So far
+the repository has Blanco's and Blanco 2's; the other five are made the same
+way as soon as both copies are at hand.
 
 ---
 
