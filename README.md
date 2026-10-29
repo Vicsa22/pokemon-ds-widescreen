@@ -40,6 +40,7 @@ cartridge. Copy it in under the game's name, in this folder:
 | Black / White | `black.sav` / `white.sav` |
 | SoulSilver / HeartGold | `soulsilver.sav` / `heartgold.sav` |
 | Platinum | `platinum.sav` |
+| A Spanish copy | the same name with `-es` (`black2-es.sav`, `soulsilver-es.sav`, ...) |
 
 - **Which files work:** a plain `.sav`, as melonDS, DeSmuME (Export Backup
   Memory), flash carts (TWiLight Menu++, R4 and the like) and cartridge dump
@@ -203,7 +204,8 @@ emulator or a flash cart, copy your save in under that name.
 **Pictures:** each game shows its box art. For your own, put a square JPEG
 or PNG in `/switch/pokemon-ds-wide/icons/` named after the game's code: `IRBO`
 Black, `IRAO` White, `IREO` Black 2, `IRDO` White 2, `IPKE` HeartGold, `IPGE`
-SoulSilver, `CPUE` Platinum (e.g. `icons/IREO.jpg`).
+SoulSilver, `CPUE` Platinum (e.g. `icons/IREO.jpg`); a Spanish copy uses its
+own code's picture if there is one, else the English copy's.
 
 **Recommended: start each game from the HOME Menu.** In the all-in-one's
 settings (**Y** in the list), **HOME MENU ICONS** puts an icon for each game in
@@ -282,10 +284,13 @@ speed; please tell us how yours runs (see [Reporting a bug](#reporting-a-bug)).
 | ![Black 2: the view from Aspertia's lookout, sky and mountains carried to the edges](docs/screenshots/black2-aspertia-lookout.jpg) | ![Black 2: Castelia City's pier](docs/screenshots/black2-castelia-pier.jpg) |
 
 - **ROMs:** any English copy (US or Europe), trimmed or not, including the
-  "NDSi Enhanced" one. Other languages put the game's code elsewhere: the
-  program says so instead of starting.
-- **Saves:** `black2.sav` and `white2.sav` (`tools/bw2/convert_save.py` turns
-  `.dsv` and Action Replay saves into the raw 512 KB save).
+  "NDSi Enhanced" one; the Spanish copies (Pokémon Negro 2 and Blanco 2) when
+  the download carries their tables (see [Spanish copies](#spanish-copies)).
+  Other languages put the game's code elsewhere: the program says so instead
+  of starting.
+- **Saves:** `black2.sav` and `white2.sav`, `black2-es.sav` and `white2-es.sav`
+  for the Spanish copies (`tools/bw2/convert_save.py` turns `.dsv` and Action
+  Replay saves into the raw 512 KB save).
 - **What you get:** battles (single, double, triple, rotation) with the HP boxes
   at the edges of the wide view and the battle buttons beside them; menus, the
   bag and the save screen laid out for one screen; and more of the map loaded
@@ -299,10 +304,13 @@ speed; please tell us how yours runs (see [Reporting a bug](#reporting-a-bug)).
 |---|---|
 | ![HeartGold: Totodile against a wild Pidgey on Route 29, with FIGHT, BAG, RUN, POKÉMON and the party beside the battle](docs/screenshots/heartgold-totodile-battle.jpg) | ![SoulSilver: Lugia following you along Route 7](docs/screenshots/soulsilver-lugia-following.jpg) |
 
-- **ROMs:** the English US versions. Other versions start, but without the
+- **ROMs:** the English US versions; the Spanish copies (Pokémon Plata
+  SoulSilver and Oro HeartGold) when the download carries their tables (see
+  [Spanish copies](#spanish-copies)). Other versions start, but without the
   one-screen layouts.
 - **Saves:** `soulsilver.sav` and `heartgold.sav` (the same format, so either
-  game reads the other's).
+  game reads the other's); `soulsilver-es.sav` and `heartgold-es.sav` for the
+  Spanish copies.
 - **What you get:** Johto and Kanto in widescreen, with your partner Pokémon
   walking behind you; battles with their buttons beside the action; menus laid
   out for one screen. Where this project started: the original ssrecomp was
@@ -315,10 +323,13 @@ speed; please tell us how yours runs (see [Reporting a bug](#reporting-a-bug)).
 | ![Black: Reshiram against a wild Mantyke, with the game's FIGHT, BAG, RUN and POKÉMON panel beside the battle](docs/screenshots/black-reshiram-battle.jpg) | ![White: Zekrom in battle, with the FIGHT panel beside it](docs/screenshots/white-zekrom-battle.jpg) |
 | ![Black: a double battle, Reshiram and Excadrill against a wild Pelipper and Mantyke, the HP boxes down the edges](docs/screenshots/black-reshiram-double.jpg) | ![Black: Nimbasa City in widescreen](docs/screenshots/black-nimbasa.jpg) |
 
-- **ROMs:** any English copy (US or Europe), trimmed or not.
+- **ROMs:** any English copy (US or Europe), trimmed or not; the Spanish copies
+  (Pokémon Negro and Blanco) when the download carries their tables (see
+  [Spanish copies](#spanish-copies)).
 - **Saves:** `black.sav` and `white.sav` (the same format, so either game reads
   the other's; `tools/bw2/convert_save.py` turns `.dsv` and Action Replay saves
-  into the raw 512 KB save).
+  into the raw 512 KB save); `black-es.sav` and `white-es.sav` for the Spanish
+  copies.
 - **What you get:** Unova's first adventure with the same treatment as Black 2:
   battles (single, double, triple, rotation) with the HP boxes at the edges of
   the wide view and the battle buttons beside them; its own layouts for the
@@ -331,12 +342,34 @@ speed; please tell us how yours runs (see [Reporting a bug](#reporting-a-bug)).
 |---|---|
 | ![Platinum: Infernape against a wild Machoke, with FIGHT, BAG, RUN and POKÉMON beside the battle](docs/screenshots/platinum-infernape-battle.jpg) | ![Platinum: Snowpoint City in the snow, in widescreen](docs/screenshots/platinum-snowpoint.jpg) |
 
-- **ROM:** the English US version (game code `CPUE`), trimmed or not.
-- **Save:** `platinum.sav`.
+- **ROM:** the English US version (game code `CPUE`), trimmed or not; the
+  Spanish copy (Pokémon Platino, `CPUS`) when the download carries its table
+  (see [Spanish copies](#spanish-copies)).
+- **Save:** `platinum.sav`; `platinum-es.sav` for the Spanish copy.
 - **What you get:** Sinnoh in widescreen, the snow and rain reaching the edges
   of the view; battles with their buttons and moves beside the action; the X
   menu at the right edge of the view, and the Bag, party, Pokédex, map and
   other menus laid out for one screen.
+
+### Spanish copies
+
+The program knows the Spanish copies of all seven games (game codes `IRES`
+Negro 2, `IRDS` Blanco 2, `IRBS` Negro, `IRAS` Blanco, `IPGS` Plata SoulSilver,
+`IPKS` Oro HeartGold, `CPUS` Platino): the list shows them by their Spanish
+names, each keeps its own save (`-es`), and each shows the English copy's box
+art unless `icons/` has a picture under its own code. A Spanish copy plays with
+the same one-screen layouts and widescreen as the English one, with its own
+texts.
+
+What makes that possible is a table per copy saying where its functions are:
+a translation keeps the game's code but moves it, as its texts and tables are
+other sizes. Those tables are made once, by a developer with both ROMs, with
+`tools/match_region.py` (Black, White, Black 2, White 2 and Platinum) and
+`tools/soulsilver/match_heartgold.py` (SoulSilver and HeartGold), and kept in
+the repository as addresses only (`tools/bw2/IRES.shifts`,
+`tools/soulsilver/soulsilver-es.json`, ...): a download carries the tables of
+the copies whose files were there when it was built, and shows any other
+Spanish copy as NOT PLAYABLE. Nothing of a game goes in the repository.
 
 ---
 
@@ -350,8 +383,11 @@ OLED in handheld mode; a PC has room to spare, and draws the same picture up to
 
 ## Known limits
 
-- Black, White, Black 2 and White 2: English (US/Europe) versions only. SoulSilver,
-  HeartGold and Platinum: US versions only.
+- Black, White, Black 2 and White 2: English (US/Europe) versions, and the
+  Spanish ones whose tables the download carries. SoulSilver, HeartGold and
+  Platinum: US versions, and the Spanish ones likewise (see
+  [Spanish copies](#spanish-copies)). Other languages: not yet; the same tools
+  would make their tables.
 - Platinum: the Pokétch (the watch on the touch screen) isn't shown during
   normal play; its apps are one press of the screen-swap button away.
 - SoulSilver and HeartGold: at map borders (Route 29 and New Bark Town, Celadon
@@ -388,9 +424,10 @@ version and the **`game.log`** file, which says what the program did:
 
 A screenshot or short video helps too. Please never attach your ROM. A white or
 black screen when a game starts usually means the ROM isn't one the program
-plays: an English copy of Black, White, Black 2 or White 2 (US or Europe), or
-the English US copy of SoulSilver, HeartGold or Platinum, unchanged (no
-patches, translations, randomizers or trimming).
+plays: an English copy of Black, White, Black 2 or White 2 (US or Europe), the
+English US copy of SoulSilver, HeartGold or Platinum, or a Spanish copy whose
+tables the download carries, unchanged (no patches, translations, randomizers
+or trimming).
 
 ## Support
 

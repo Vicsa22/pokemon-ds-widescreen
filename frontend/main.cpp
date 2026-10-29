@@ -1565,9 +1565,10 @@ int main(int argc, char** argv)
 
     std::vector<uint8_t> rom = ReadFile(opt.rom);
     FuncWatch::RomPath = opt.rom; // (for a function table that reads its first bytes from it)
-    // Pokemon SoulSilver (US): its new game's first menu is skipped (see where keys are sent).
-    // (HeartGold too: the same game where it matters here.)
-    const bool soulSilverRom = rom.size() > 0x10 && (memcmp(&rom[0x0C], "IPGE", 4) == 0 || memcmp(&rom[0x0C], "IPKE", 4) == 0);
+    // Pokemon SoulSilver: its new game's first menu is skipped (see where keys are sent).
+    // (HeartGold too: the same game where it matters here; and the Spanish copies of both.)
+    const bool soulSilverRom = rom.size() > 0x10 && (memcmp(&rom[0x0C], "IPGE", 4) == 0 || memcmp(&rom[0x0C], "IPKE", 4) == 0 ||
+                                                     memcmp(&rom[0x0C], "IPGS", 4) == 0 || memcmp(&rom[0x0C], "IPKS", 4) == 0);
     if (rom.empty())
     {
         fprintf(stderr, "cannot read ROM: %s\n", opt.rom.c_str());

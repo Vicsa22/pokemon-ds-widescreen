@@ -1,5 +1,5 @@
-// Pokemon Black 2 and White 2 (US), Black and White (US/Europe): more of the map loaded beside the
-// player, for the wide view.
+// Pokemon Black 2 and White 2 (US), Black and White (US/Europe), and the Spanish copies of the
+// four: more of the map loaded beside the player, for the wide view.
 //
 // The game keeps a small window of its map's 32x32-tile chunks loaded around the player (most
 // outdoor maps 2x2 chunks, chosen by which half of a chunk the player stands in) and draws only
@@ -48,6 +48,16 @@ public:
         const char* env = getenv("SSR_B2_MAP");
         V = Find(code);
         if (!V || !enabled || (env && !strcmp(env, "0"))) return;
+        // The English copies' addresses are below; a Spanish copy's are in its function table
+        // ("d" lines, found in its ROM by tools/match_region.py). Without them the windows stay
+        // as the game has them.
+        table = V->table ? V->table : watch.DataAddr("MAP_CONFIGS");
+        heapSetup = V->heapSetup ? V->heapSetup : watch.DataAddr("HEAP_SETUP_NTR");
+        if (!table || !heapSetup)
+        {
+            fprintf(stderr, "[bw2map] %s: the map table's and heap's addresses are not in its function table; wider map windows off\n", code);
+            return;
+        }
         Nds = &nds;
         // (Both read the table: the overworld's memory is sized from it first, when the overworld
         // starts, then the map is set up from it.)
@@ -73,6 +83,8 @@ private:
     // White 2's code is Black 2's, a little further along in memory.
     // Black and White have the same table (21 entries) in their field overlay (21), found by its
     // contents, and their heap setup in the main binary with a smaller user heap (0x199500).
+    // The Spanish copies (0 here) have both tables at other addresses, which their function
+    // tables give (tools/match_region.py finds them in the ROM by their bytes).
     struct Version { const char* code; uint32_t table, heapSetup, heapUser, count; };
     static const Version* Find(const char* code)
     {
@@ -81,6 +93,10 @@ private:
             { "IRDO", 0x021ca050, 0x0208ee94, 0x1a3e00, 29 }, // White 2
             { "IRBO", 0x021d3700, 0x0209d8b0, 0x199500, 21 }, // Black
             { "IRAO", 0x021d3718, 0x0209d8c8, 0x199500, 21 }, // White
+            { "IRES", 0, 0, 0x1a3e00, 29 },                   // Black 2, Spanish
+            { "IRDS", 0, 0, 0x1a3e00, 29 },                   // White 2, Spanish
+            { "IRBS", 0, 0, 0x199500, 21 },                   // Black, Spanish
+            { "IRAS", 0, 0, 0x199500, 21 },                   // White, Spanish
         };
         for (const Version& v : versions)
             if (!strcmp(code, v.code)) return &v;
@@ -103,6 +119,7 @@ private:
     static constexpr uint32_t HeapUserExtra = 0x180000;
 
     const Version* V = nullptr;
+    uint32_t table = 0, heapSetup = 0; // this copy's MAP_CONFIGS and HEAP_SETUP_NTR
     melonDS::NDS* Nds = nullptr;
     bool logged = false;
 
@@ -121,14 +138,14 @@ private:
     // arena is left unused.
     void Arena()
     {
-        if (Nds->MainRAMMask != 0x7FFFFF || Read32(V->heapSetup + 8) != V->heapUser) return;
+        if (Nds->MainRAMMask != 0x7FFFFF || Read32(heapSetup + 8) != V->heapUser) return;
         // The game's protection region for main RAM (region 1, set up by the start-up code for 4 MB:
         // 0x0200002b) made 8 MB, or the first use of the upper half faults.
         if (Nds->ARM9.PU_Region[1] != 0x0200002b) return;
         Nds->ARM9.CP15Write(0x610, 0x0200002d);
         Write32(ArenaLo, ArenaStart);
         Write32(ArenaHi, ArenaEnd);
-        Write32(V->heapSetup + 8, V->heapUser + HeapUserExtra);
+        Write32(heapSetup + 8, V->heapUser + HeapUserExtra);
         fprintf(stderr, "[bw2map] 8 MB: the game's heap 0x%x bytes at 0x%x\n", V->heapUser + HeapUserExtra, ArenaStart);
     }
 
@@ -136,15 +153,15 @@ private:
     {
         // (The table is in the field overlay: its first entry, as the game has it, or already
         // changed, says it is there.)
-        if (Read32(V->table) != 0x200000 || Read32(V->table + 4) != 0x400000) return;
+        if (Read32(table) != 0x200000 || Read32(table + 4) != 0x400000) return;
         // (Only with the bigger heap: there is no room in the DS's own 4 MB, and a save state made
         // without it keeps the game's own windows.)
-        if (Read32(V->heapSetup + 8) != V->heapUser + HeapUserExtra) return;
+        if (Read32(heapSetup + 8) != V->heapUser + HeapUserExtra) return;
         static const bool log = getenv("SSR_B2_MAP_LOG") != nullptr;
         if (log) fprintf(stderr, "[bw2map] table read for zone %u\n", Nds->ARM9.R[0] & 0xFFFF);
         for (uint32_t i = 0; i < V->count; i++)
         {
-            const uint32_t e = V->table + i * Size;
+            const uint32_t e = table + i * Size;
             const uint16_t dx = Read16(e + OffDiameterX), dz = Read16(e + OffDiameterZ);
             const uint32_t buffer = Read32(e + OffBuffer), heap = Read32(e + OffHeap);
             if (log && !logged)
