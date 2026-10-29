@@ -208,17 +208,31 @@ def locate(src, off, size, thumb, dst, near, window=WINDOW):
 
 
 def locate_bytes(src, off, size, dst, near, window=WINDOW):
-    """Where dst has the exact bytes src[off:off+size] (a table of data): the offset, or None.
-    The nearest to `near`; the whole of dst when the window has none."""
+    """Where dst has the bytes src[off:off+size] (a table of data) with the words that look like
+    addresses left out of the comparison (a table's pointers move with the code): the offset,
+    or None. The nearest to `near`; the whole of dst when the window has none."""
     if off < 0 or off + size > len(src):
         return None
     pattern = src[off:off + size]
+    masked = [is_addr(struct.unpack_from('<I', pattern, i)[0]) for i in range(0, len(pattern) - 3, 4)]
+    # The plain bytes up to the first address, for bytes.find; at least one word of them.
+    n = next((i for i, m in enumerate(masked) if m), len(masked)) * 4
+    if n < 4:
+        return None
+    nd = pattern[:n]
+
+    def hit(o):
+        if o + len(pattern) > len(dst):
+            return False
+        return all(m or pattern[i * 4:i * 4 + 4] == dst[o + i * 4:o + i * 4 + 4] for i, m in enumerate(masked))
+
     found = []
     for lo, hi in ((max(0, near - window), min(len(dst), near + window + size)), (0, len(dst))):
-        p = dst.find(pattern, lo, hi)
+        p = dst.find(nd, lo, hi)
         while 0 <= p < hi:
-            found.append(p)
-            p = dst.find(pattern, p + 1, hi)
+            if hit(p):
+                found.append(p)
+            p = dst.find(nd, p + 1, hi)
         if found:
             break
     if not found:

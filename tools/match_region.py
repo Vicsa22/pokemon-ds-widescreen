@@ -28,11 +28,17 @@ from codematch import COMPARE, Module, Rom, shift_lines  # noqa: E402
 # addresses): name -> (module, address, size), per game code. Found in the other copy by their
 # exact bytes (the map windows and heap sizes do not change with the language).
 DATA = {
-    'IREO': {'MAP_CONFIGS': ('ov36', 0x021ca01c, 29 * 72), 'HEAP_SETUP_NTR': ('main', 0x0208ee68, 16)},
-    'IRDO': {'MAP_CONFIGS': ('ov36', 0x021ca050, 29 * 72), 'HEAP_SETUP_NTR': ('main', 0x0208ee94, 16)},
-    'IRBO': {'MAP_CONFIGS': ('ov21', 0x021d3700, 21 * 72), 'HEAP_SETUP_NTR': ('main', 0x0209d8b0, 16)},
-    'IRAO': {'MAP_CONFIGS': ('ov21', 0x021d3718, 21 * 72), 'HEAP_SETUP_NTR': ('main', 0x0209d8c8, 16)},
+    'IREO': {'MAP_CONFIGS': ('ov036', 0x021ca01c, 29 * 72), 'HEAP_SETUP_NTR': ('main', 0x0208ee68, 16)},
+    'IRDO': {'MAP_CONFIGS': ('ov036', 0x021ca050, 29 * 72), 'HEAP_SETUP_NTR': ('main', 0x0208ee94, 16)},
+    'IRBO': {'MAP_CONFIGS': ('ov021', 0x021d3700, 21 * 72), 'HEAP_SETUP_NTR': ('main', 0x0209d8b0, 16)},
+    'IRAO': {'MAP_CONFIGS': ('ov021', 0x021d3718, 21 * 72), 'HEAP_SETUP_NTR': ('main', 0x0209d8c8, 16)},
 }
+# (The tables name an overlay with three digits, ov036, as the decompilations do; a shift file
+# or a test may say ov36: both are the same module.)
+
+
+def same_module(a, b):
+    return a == b or (a.startswith('ov') and b.startswith('ov') and a[2:].isdigit() and b[2:].isdigit() and int(a[2:]) == int(b[2:]))
 
 # The names of the games by code, for the shift file's header (the launcher has its own).
 GAMES = {
@@ -79,7 +85,7 @@ def match(rows, src, dst, data=None, log=sys.stderr):
         notes.append(f'{module}: {m.found} of {len(funcs)} functions found, {m.missed} not'
                      + (' (' + ', '.join(missed[:6]) + (', ...' if len(missed) > 6 else '') + ')' if missed else ''))
         for name, (dmod, daddr, dsize) in sorted((data or {}).items()):
-            if dmod != module:
+            if not same_module(dmod, module):
                 continue
             found = m.find_bytes(daddr, dsize)
             if found is None:
