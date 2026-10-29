@@ -44,23 +44,35 @@ struct Game
 // The size the larger pictures are kept at (the tiles of the list at 720 lines).
 constexpr int Art = 224;
 
-// The games this program plays, in the order the list shows them.
+// The games this program plays, in the order the list shows them: the English copies, and the
+// Spanish ones (their own game codes), whose tables are made from the English copy's by
+// tools/match_region.py and tools/soulsilver/match_heartgold.py. A Spanish copy keeps its own
+// save (a player with both copies of a game would otherwise have them share one), and shows
+// the English copy's picture unless it has one of its own.
 struct KnownGame
 {
     const char* code;
     const char* name;
     const char* save;
+    const char* english; // the English copy's code (its own for an English copy)
 };
 inline const KnownGame* Known(const std::string& code)
 {
     static const KnownGame games[] = {
-        { "IRBO", "Pokemon Black", "black.sav" },
-        { "IRAO", "Pokemon White", "white.sav" },
-        { "IREO", "Pokemon Black 2", "black2.sav" },
-        { "IRDO", "Pokemon White 2", "white2.sav" },
-        { "IPKE", "Pokemon HeartGold", "heartgold.sav" },
-        { "IPGE", "Pokemon SoulSilver", "soulsilver.sav" },
-        { "CPUE", "Pokemon Platinum", "platinum.sav" },
+        { "IRBO", "Pokemon Black", "black.sav", "IRBO" },
+        { "IRBS", "Pokemon Negro", "black-es.sav", "IRBO" },
+        { "IRAO", "Pokemon White", "white.sav", "IRAO" },
+        { "IRAS", "Pokemon Blanco", "white-es.sav", "IRAO" },
+        { "IREO", "Pokemon Black 2", "black2.sav", "IREO" },
+        { "IRES", "Pokemon Negro 2", "black2-es.sav", "IREO" },
+        { "IRDO", "Pokemon White 2", "white2.sav", "IRDO" },
+        { "IRDS", "Pokemon Blanco 2", "white2-es.sav", "IRDO" },
+        { "IPKE", "Pokemon HeartGold", "heartgold.sav", "IPKE" },
+        { "IPKS", "Pokemon Oro HeartGold", "heartgold-es.sav", "IPKE" },
+        { "IPGE", "Pokemon SoulSilver", "soulsilver.sav", "IPGE" },
+        { "IPGS", "Pokemon Plata SoulSilver", "soulsilver-es.sav", "IPGE" },
+        { "CPUE", "Pokemon Platinum", "platinum.sav", "CPUE" },
+        { "CPUS", "Pokemon Platino", "platinum-es.sav", "CPUE" },
     };
     for (const KnownGame& g : games)
         if (code == g.code) return &g;
@@ -68,10 +80,25 @@ inline const KnownGame* Known(const std::string& code)
 }
 inline int Order(const std::string& code)
 {
-    static const char* order[] = { "IRBO", "IRAO", "IREO", "IRDO", "IPKE", "IPGE", "CPUE" };
-    for (int i = 0; i < 7; i++)
+    static const char* order[] = { "IRBO", "IRBS", "IRAO", "IRAS", "IREO", "IRES", "IRDO", "IRDS",
+                                   "IPKE", "IPKS", "IPGE", "IPGS", "CPUE", "CPUS" };
+    for (int i = 0; i < 14; i++)
         if (code == order[i]) return i;
-    return 7;
+    return 14;
+}
+// The code whose picture a game shows when it has none of its own: the English copy's for a
+// Spanish copy, else its own.
+inline const char* ArtCode(const std::string& code)
+{
+    const KnownGame* k = Known(code);
+    return k ? k->english : code.c_str();
+}
+// Whether a game is SoulSilver or HeartGold (any language): played from the program's own
+// tables (tools/soulsilver/tables_only.py), never from a function table.
+inline bool IsHeartSilver(const std::string& code)
+{
+    const KnownGame* k = Known(code);
+    return k && (!strcmp(k->english, "IPGE") || !strcmp(k->english, "IPKE"));
 }
 
 inline bool EndsWithNds(const std::string& name)
@@ -274,8 +301,11 @@ inline void FindArt(Game& g, const std::string& listFolder)
 {
     std::vector<unsigned char> data;
     const std::string base = g.rom.substr(0, g.rom.size() - 4);
+    const std::string art = ArtCode(g.code);
     for (const std::string& path : { listFolder + "/icons/" + g.code + ".jpg", listFolder + "/icons/" + g.code + ".png",
-                                     base + ".jpg", base + ".png", g.folder + "/icon.jpg" })
+                                     base + ".jpg", base + ".png",
+                                     listFolder + "/icons/" + art + ".jpg", listFolder + "/icons/" + art + ".png",
+                                     g.folder + "/icon.jpg" })
         if (ReadFile(path, data) && LoadArt(data.data(), data.size(), g.art)) return;
     if (g.folder == listFolder) return;
     if (DIR* d = opendir(g.folder.c_str()))

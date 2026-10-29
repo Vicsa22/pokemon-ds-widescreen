@@ -24,6 +24,11 @@ Targets: Linux and Windows first, Android second. macOS is community-maintained.
   any change to `tools/recomp.py`, `tools/recomp_inline.py`, `runtime/` or the
   melonDS CPU code, regenerate `gen/`, rebuild, and pass `--lockstep` (below).
   A speed-up that breaks lockstep is a bug.
+- **Shift files hold addresses only.** `tools/*/*.shifts` and
+  `tools/soulsilver/*.json` are made from two ROMs but contain no bytes of
+  either (the few data tables are named by address). Make them with the
+  matching tools; never write a game's code into the repository to support a
+  language.
 - **Measure performance claims** against `--interp` on the same snapshot, more
   than once (the timings vary by several percent with machine load). Many
   plausible optimisations were measured to be slower; see "Already tried".
@@ -59,6 +64,8 @@ Targets: Linux and Windows first, Android second. macOS is community-maintained.
 | `frontend/switch_platform.cpp` | the Switch's parts (SD card folder, clocks, threads, exit); only file that sees libnx |
 | `frontend/launcher.h` | the all-games program's game list (ROMs found, icons and names from their banners), drawn by `switch_platform.cpp` before the game starts |
 | `frontend/bw1.h`, `tools/bw1/`, `tools/bw2/` | Pokémon Black, White and Black 2: no recompiled code; layouts follow the functions in `funcs.txt` (made by `funcmap.py` from a decompilation's symbols and the ROM), Black's own layouts on top of Black 2's (White's table is Black's at the addresses in `tools/bw1/white_shifts.txt`) |
+| `tools/codematch.py`, `tools/match_region.py`, `tools/shift_table.py`, `tools/region_tables.py` | other languages (the Spanish copies, game codes `IRES`, `IRDS`, `IRBS`, `IRAS`, `CPUS`): `match_region.py` finds, by their code, where another copy has the English table's functions (and the data tables `bw2map.h` patches) and writes a `.shifts` file of addresses (`tools/bw2/IRES.shifts`, ...); `region_tables.py`, run by the build scripts, makes the copy's table from it with `shift_table.py`. The launcher's list of games and saves is in `frontend/launcher.h` (`Known`) |
+| `tools/soulsilver/match_heartgold.py` | the same for SoulSilver's chunk table: HeartGold (US) and the Spanish SoulSilver and HeartGold (`IPGS`, `IPKS`) as JSON shift files that `tables_only.py` builds in |
 | `melonDS/src/GPU3D_WideGpu*.cpp`, `wide_gpu/` | the widescreen world drawn by a graphics chip: deko3D on the Switch, OpenGL on a PC for headless comparisons (keep both in step with `GPU3D_Wide.cpp`) |
 | `frontend/pc_launcher.cpp`, `tools/pc/` | the PC all-games download (Windows and Linux, `SSR_PC_ALL_GAMES`): the game list (launcher.h) when started without arguments, ROMs in `roms/`, saves in `saves/`, function tables in `data/funcs/`; `tools/pc/build_all.sh` builds and packs it (Windows with MinGW-w64 from Linux or WSL) |
 | `tools/switch/` | Switch builds: `build_game.sh` (any of the games; `bw`: the shared Black 2/White 2 build with its tables in the romfs; `all`: one program for all seven with the game list), `build.sh` (SoulSilver) |

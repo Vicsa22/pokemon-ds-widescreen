@@ -69,6 +69,9 @@ struct RcPortable
 bool rc_register_portable(const RcPortable* tables);
 // Whether the tables are waiting for the code from the ROM (call rc_portable_load first).
 bool rc_portable_needed();
+// Whether the tables serve a ROM with game code `code`: with tables that hold no code, one of
+// the games they were made for; with the recompiled code, SoulSilver and HeartGold (US) only.
+bool rc_tables_know(const char code[4]);
 // Reads the overlays' code through `overlay` (its bytes and size, or null when the ROM has no
 // such overlay) for a ROM with game code `code`. Returns the game's name, or null if the
 // tables do not know that game (then nothing is watched). Before rc_watch_attach and probes.

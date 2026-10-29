@@ -6,10 +6,14 @@
 #   tools/pc/build_all.sh windows your-soulsilver-us.nds
 #   tools/pc/build_all.sh linux   your-soulsilver-us.nds
 #   tools/pc/build_all.sh both    your-soulsilver-us.nds
+#   tools/pc/build_all.sh both    -        (without SoulSilver and HeartGold: no ROM needed)
 #
 # As for the Switch's all-games download (tools/switch/build_game.sh all), the SoulSilver ROM is
 # only read for the addresses in SoulSilver and HeartGold's tables, and the Black games' function
 # tables come from the decompilations' symbol files: the downloads hold nothing of the games.
+# With - for the ROM the program is built without those tables (tools/bw2/stubgen): it plays
+# the Black games and Platinum, and lists SoulSilver and HeartGold as games it does not have.
+# SSR_PC_NO_APPIMAGE=1 leaves the AppImage out (no appimagetool or zsyncmake at hand).
 #
 # The results, in build-pc-dist/:
 #   pokemon-ds-wide-pc-windows-x86_64.zip   Pokemon DS Launcher.exe, SDL2.dll, data/, roms/
@@ -51,11 +55,13 @@ case "$TARGET" in
     windows|linux|both) ;;
     *) fail "which? tools/pc/build_all.sh windows|linux|both your-soulsilver-us.nds" ;;
 esac
-[ -n "$ROM" ] || fail "give your SoulSilver ROM (US): tools/pc/build_all.sh $TARGET your-soulsilver-us.nds"
-[ -f "$ROM" ] || fail "no such file: $ROM"
-[ "$(dd if="$ROM" bs=1 skip=12 count=4 2>/dev/null)" = IPGE ] ||
-    fail "$ROM is not Pokemon SoulSilver (US, game code IPGE): the tables are made from it"
-ROM="$(cd "$(dirname "$ROM")" && pwd)/$(basename "$ROM")"
+[ -n "$ROM" ] || fail "give your SoulSilver ROM (US), or - to build without SoulSilver and HeartGold: tools/pc/build_all.sh $TARGET your-soulsilver-us.nds"
+if [ "$ROM" != - ]; then
+    [ -f "$ROM" ] || fail "no such file: $ROM"
+    [ "$(dd if="$ROM" bs=1 skip=12 count=4 2>/dev/null)" = IPGE ] ||
+        fail "$ROM is not Pokemon SoulSilver (US, game code IPGE): the tables are made from it"
+    ROM="$(cd "$(dirname "$ROM")" && pwd)/$(basename "$ROM")"
+fi
 for tool in git cmake ninja python3 curl; do
     command -v "$tool" >/dev/null || fail "$tool is not installed (Ubuntu: sudo apt install git cmake ninja-build python3 curl)"
 done
@@ -81,13 +87,19 @@ fetch_symbols() { # dir url commit paths...
     git -C "$dir" checkout -q --force FETCH_HEAD
 }
 
-# SoulSilver and HeartGold's tables (addresses only), as for the Switch.
-if [ ! -f gen/sources.cmake ]; then
-    say "SoulSilver's tables, from $ROM"
-    python3 tools/recomp.py --rom "$ROM" --layout layouts/soulsilver-us.json melonDS/src gen
-    python3 tools/apps.py --layout layouts/soulsilver-us.json gen
+# SoulSilver and HeartGold's tables (addresses only), as for the Switch; or none (ROM -).
+GEN="$HERE/build-gen-tables"
+if [ "$ROM" = - ]; then
+    say "Without SoulSilver and HeartGold (no ROM given): their tables left out"
+    GEN="$HERE/tools/bw2/stubgen"
+else
+    if [ ! -f gen/sources.cmake ]; then
+        say "SoulSilver's tables, from $ROM"
+        python3 tools/recomp.py --rom "$ROM" --layout layouts/soulsilver-us.json melonDS/src gen
+        python3 tools/apps.py --layout layouts/soulsilver-us.json gen
+    fi
+    python3 tools/soulsilver/tables_only.py gen build-gen-tables
 fi
-python3 tools/soulsilver/tables_only.py gen build-gen-tables
 
 # The function tables (made without a ROM: the program reads the few bytes they need from the
 # player's ROM), one per game, in data/funcs beside the program.
@@ -105,12 +117,14 @@ python3 tools/bw2/funcmap.py build-decomp-pokew2/config/w2_us/arm9 - "$DATA/func
 python3 tools/bw1/funcmap.py build-decomp-aletheia/layout/function_addrs.tsv - "$DATA/funcs/IRBO.txt"
 python3 tools/bw1/funcmap.py build-decomp-aletheia/layout/function_addrs.tsv - "$DATA/funcs/IRAO.txt" --white
 cp tools/platinum/CPUE.txt "$DATA/funcs/CPUE.txt"
+# The Spanish copies' tables, from the shift files in the repository (tools/region_tables.py).
+python3 tools/region_tables.py "$DATA/funcs"
 
 # The build: the JIT for every game, no libpng (screenshots are for tests), OpenGL for WORLD ON
 # GPU (WGL on Windows, EGL on Linux), and SSE rather than the building machine's AVX2
 # (SSR_PORTABLE_X86), so that it runs on any 64-bit PC.
 COMMON=(-G Ninja -DCMAKE_BUILD_TYPE=Release -DSSR_JIT=ON -DSSR_PC_ALL_GAMES=ON -DSSR_PNG=OFF -DSSR_GPU3D=ON
-        -DSSR_PORTABLE_X86=ON -DSSR_GENERATED_DIR="$HERE/build-gen-tables")
+        -DSSR_PORTABLE_X86=ON -DSSR_GENERATED_DIR="$GEN")
 ART="${SSR_PC_ART:-}"
 [ -n "$ART" ] && { [ -d "$ART" ] || fail "SSR_PC_ART: no such folder: $ART"; ART="$(realpath "$ART")"; say "Pictures for the game list: $ART"; }
 COMMON+=(-DSSR_PC_ART="$ART")
@@ -132,7 +146,7 @@ stage() {
 check_contents() { # list of paths, one per line, relative to the download's top folder
     python3 -c "
 import re, sys
-ok = re.compile(r'^pokemon-ds-wide/(pokemon-ds-wide|Pokemon DS Launcher\.exe|SDL2\.dll|libSDL2-2\.0\.so\.0|LICENSE\.txt|LICENSE-SDL2\.txt|README\.txt|roms/|data/|data/funcs/|data/funcs/(IREO|IRDO|IRBO|IRAO|CPUE)\.txt)?$')
+ok = re.compile(r'^pokemon-ds-wide/(pokemon-ds-wide|Pokemon DS Launcher\.exe|SDL2\.dll|libSDL2-2\.0\.so\.0|LICENSE\.txt|LICENSE-SDL2\.txt|README\.txt|roms/|data/|data/funcs/|data/funcs/(IREO|IRDO|IRBO|IRAO|CPUE|IRES|IRDS|IRBS|IRAS|CPUS)\.txt)?$')
 bad = [l for l in sys.stdin.read().splitlines() if l and not ok.match(l)]
 if bad: sys.exit('unexpected files in the download: %s' % bad)
 "
@@ -216,6 +230,7 @@ if [ "$TARGET" != windows ]; then
 
     # The same program as one AppImage. The update information in it points at the PC release's
     # .zsync, so AppImage managers (Gear Lever, AppImageUpdate) find new versions by themselves.
+    [ -z "${SSR_PC_NO_APPIMAGE:-}" ] || { say "The AppImage left out (SSR_PC_NO_APPIMAGE)"; exit 0; }
     say "The AppImage"
     APPIMAGE=pokemon-ds-wide-pc-linux-x86_64.AppImage
     AIT="$HERE/build-pc-deps/appimagetool-x86_64.AppImage"
@@ -264,7 +279,7 @@ ls -l build-pc-dist/*.zip build-pc-dist/*.tar.gz build-pc-dist/*.AppImage* 2>/de
 cat <<EOF
 
 Unpack the download anywhere, put your ROMs in its roms folder (any names: English Black, White,
-Black 2 and White 2; SoulSilver, HeartGold and Platinum US) and start Pokemon DS Launcher.exe
-(Linux: pokemon-ds-wide).
+Black 2 and White 2; SoulSilver, HeartGold and Platinum US; the Spanish copies whose tables are
+in data/funcs) and start Pokemon DS Launcher.exe (Linux: pokemon-ds-wide).
 The downloads hold only the program: nothing of the games.
 EOF

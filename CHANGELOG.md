@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- **The Spanish copies of the games** (Negro, Blanco, Negro 2, Blanco 2, Plata SoulSilver, Oro
+  HeartGold and Platino): the program knows them by their game codes, lists them by their
+  Spanish names, gives each its own save (`black2-es.sav`, ...) and shows them the English copy's
+  box art. They play with the same layouts once their tables are made: a translation keeps the
+  game's code but moves it, so a developer with both ROMs runs `tools/match_region.py` (the Black
+  games and Platinum) or `tools/soulsilver/match_heartgold.py` (SoulSilver and HeartGold) once,
+  and the shift files it writes (addresses only) go in the repository; the builds make the
+  tables from them (`tools/region_tables.py`). A download without a copy's tables shows that
+  copy as NOT PLAYABLE. Blanco (`tools/bw1/IRAS.shifts`), Blanco 2 (`tools/bw2/IRDS.shifts`) and
+  Platino (`tools/platinum/CPUS.shifts`) have theirs: 99.8% of their functions found, the opening
+  laid out on one screen as in the English copies, Blanco's first battle in the wide battle view,
+  Blanco 2's 8 MB and wider map windows on. Oro HeartGold has its file too
+  (`tools/soulsilver/heartgold-es.json`, 99.6% found), made through HeartGold (US) and its own
+  shifts rather than from SoulSilver (`match_heartgold.py --via`, functions from the layout
+  file instead of a build); it has not been run in the program yet, which needs the SoulSilver
+  (US) ROM to build. Negro, Negro 2 and Plata SoulSilver wait for their ROMs.
 - **README: a trailer at the top**, every game on every platform.
 - **The pause menu and the settings page in groups:** the pause menu is RESUME, SAVE STATE, LOAD
   STATE, FAST FORWARD, then DISPLAY, GRAPHICS and CONTROLS (each a page of its own), RESET GAME and

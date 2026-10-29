@@ -48,6 +48,13 @@ public:
             std::istringstream ss(line);
             std::string addr, kind, module, first, name;
             if (!(ss >> addr >> kind >> module >> first >> name)) continue;
+            if (kind == "d")
+            {
+                // A data table's address (tools/shift_table.py writes them for another language's
+                // copy: frontend/bw2map.h reads them), not a function: not watched.
+                Data[name] = (uint32_t)strtoul(addr.c_str(), nullptr, 16);
+                continue;
+            }
             Func fn;
             fn.addr = (uint32_t)strtoul(addr.c_str(), nullptr, 16);
             fn.thumb = kind == "t";
@@ -74,6 +81,13 @@ public:
         }
         fprintf(stderr, "[funcwatch] %zu functions from %s\n", Funcs.size(), path.c_str());
         return !Funcs.empty() && FillFirstBytes(RomPath);
+    }
+
+    // The address of a data table the function table names (a "d" line), or 0.
+    uint32_t DataAddr(const std::string& name) const
+    {
+        auto it = Data.find(name);
+        return it == Data.end() ? 0 : it->second;
     }
 
     // The ROM whose overlays FillFirstBytes reads, when Load finds a table that needs it.
@@ -213,6 +227,7 @@ private:
     std::vector<uint8_t> Bitmap, JitBitmap;
     std::unordered_map<uint32_t, std::vector<int>> ByAddr;
     std::unordered_multimap<std::string, int> ByName;
+    std::unordered_map<std::string, uint32_t> Data; // the "d" lines: data tables by name
     melonDS::NDS* Nds = nullptr;
     uint32_t Frame = 1;
 };
