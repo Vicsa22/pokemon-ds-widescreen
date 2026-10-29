@@ -10,9 +10,14 @@
   games and Platinum) or `tools/soulsilver/match_heartgold.py` (SoulSilver and HeartGold) once,
   and the shift files it writes (addresses only) go in the repository; the builds make the
   tables from them (`tools/region_tables.py`). A download without a copy's tables shows that
-  copy as NOT PLAYABLE. Blanco (`tools/bw1/IRAS.shifts`) and Blanco 2 (`tools/bw2/IRDS.shifts`)
-  have theirs: 99.8% of their functions found, the opening laid out on one screen as in the
-  English copies, the 8 MB and the wider map windows on. The other five wait for their files.
+  copy as NOT PLAYABLE. Blanco (`tools/bw1/IRAS.shifts`), Blanco 2 (`tools/bw2/IRDS.shifts`) and
+  Platino (`tools/platinum/CPUS.shifts`) have theirs: 99.8% of their functions found, the opening
+  laid out on one screen as in the English copies, Blanco's first battle in the wide battle view,
+  Blanco 2's 8 MB and wider map windows on. Oro HeartGold has its file too
+  (`tools/soulsilver/heartgold-es.json`, 99.6% found), made through HeartGold (US) and its own
+  shifts rather than from SoulSilver (`match_heartgold.py --via`, functions from the layout
+  file instead of a build); it has not been run in the program yet, which needs the SoulSilver
+  (US) ROM to build. Negro, Negro 2 and Plata SoulSilver wait for their ROMs.
 - **README: a trailer at the top**, every game on every platform.
 - **The pause menu and the settings page in groups:** the pause menu is RESUME, SAVE STATE, LOAD
   STATE, FAST FORWARD, then DISPLAY, GRAPHICS and CONTROLS (each a page of its own), RESET GAME and
