@@ -16,6 +16,7 @@ widescreen, 60 fps, up to 4K on a PC and 720p on the Switch.** No more squinting
 | Pokémon SoulSilver and HeartGold | ✅ | ✅ | ✅ |
 | Pokémon Platinum | ✅ | ✅ | ✅ |
 | Pokémon Omega Ruby | 🛠️ in the works (its own project) | | 🛠️ in the works |
+| **Spanish copies** (Blanco, Blanco 2, Platino; see [Spanish copies](#spanish-copies)) | [test build for Windows and Linux](../../releases/tag/pc-es-1), without SoulSilver and HeartGold | | |
 
 One program per platform: start it and pick the game from the list. The
 downloads are free of the games themselves: you bring your own ROMs, and the
