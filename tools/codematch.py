@@ -33,21 +33,30 @@ COMPARE = 48
 def autoloads(main, ram):
     """The main program's autoload blocks (the ITCM's and DTCM's code and data, copied out of it
     by the start-up code): address -> bytes, from the module parameters the "nitrocode" marker
-    points at (the list of blocks, and where their images start)."""
+    points at (the list of blocks, and where their images start). A block's entry is 12 bytes
+    (address, size, bss size) in the DS SDK and 16 in the DSi-enhanced games' (the address again
+    before the bss size); the list's length and the addresses tell which."""
     marker = struct.pack('<I', NITROCODE)
     pos = main.find(marker)
     while pos >= 0:
         p = pos - 0x1C
         if p >= 0:
             list_start, list_end, data_start = struct.unpack_from('<3I', main, p)
-            lo, hi, data = list_start - ram, list_end - ram, data_start - ram
-            if 0 <= lo <= hi <= len(main) and 0 <= data <= len(main) and (hi - lo) % 12 == 0:
-                out = {}
-                for i in range(lo, hi, 12):
-                    addr, size, _bss = struct.unpack_from('<3I', main, i)
-                    out[addr] = main[data:data + size]
-                    data += size
-                return out
+            lo, hi, data0 = list_start - ram, list_end - ram, data_start - ram
+            if 0 <= lo <= hi <= len(main) and 0 <= data0 <= len(main):
+                for stride in (12, 16):
+                    if (hi - lo) % stride:
+                        continue
+                    out, data, ok = {}, data0, True
+                    for i in range(lo, hi, stride):
+                        addr, size = struct.unpack_from('<2I', main, i)
+                        if not 0x01FF8000 <= addr < 0x0A000000 or data + size > len(main):
+                            ok = False
+                            break
+                        out[addr] = main[data:data + size]
+                        data += size
+                    if ok:
+                        return out
         pos = main.find(marker, pos + 1)
     return {}
 
