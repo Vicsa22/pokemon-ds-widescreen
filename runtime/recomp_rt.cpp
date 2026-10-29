@@ -185,6 +185,14 @@ bool rc_register_portable(const RcPortable* tables)
 
 bool rc_portable_needed() { return portable && !portableLoaded; }
 
+bool rc_tables_know(const char code[4])
+{
+    if (!portable) return !memcmp(code, "IPGE", 4) || !memcmp(code, "IPKE", 4);
+    for (unsigned g = 0; g < portable->numGames; g++)
+        if (!memcmp(portable->games[g].code, code, 4)) return true;
+    return false;
+}
+
 const char* rc_portable_load(const char code[4], const unsigned char* (*overlay)(void*, int, unsigned*), void* user)
 {
     if (!portable) return nullptr;

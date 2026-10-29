@@ -45,6 +45,7 @@
 
 // How many chunks the program's SoulSilver tables have (none in a build without them).
 extern const uint32_t rc_num_chunks;
+bool rc_tables_know(const char code[4]); // (runtime/recomp_api.h: whether the tables serve this game)
 
 namespace PcLauncher
 {
@@ -215,7 +216,7 @@ void SetRomFolder(Folders& fo)
 // the emulator, which reads them by file name.
 void ExtractFuncs(const Folders& fo)
 {
-    for (const char* code : { "IREO", "IRDO", "IRBO", "IRAO", "CPUE" })
+    for (const char* code : { "IREO", "IRDO", "IRBO", "IRAO", "CPUE", "IRES", "IRDS", "IRBS", "IRAS", "CPUS" })
     {
         SDL_RWops* rw = SDL_RWFromFile((std::string("funcs/") + code + ".txt").c_str(), "rb");
         if (!rw) continue;
@@ -236,12 +237,13 @@ void ExtractFuncs(const Folders& fo)
 }
 #endif
 
-// Whether this program plays a game: SoulSilver and HeartGold need the program's own tables,
-// the others their function table in data/funcs.
+// Whether this program plays a game: SoulSilver and HeartGold need the program's own tables
+// (which know the English copies, and the Spanish ones they were made for), the others their
+// function table in data/funcs.
 bool Playable(const Folders& fo, const Launcher::Game& g)
 {
     if (!g.known) return false;
-    if (g.code == "IPGE" || g.code == "IPKE") return rc_num_chunks > 0;
+    if (Launcher::IsHeartSilver(g.code)) return rc_num_chunks > 0 && rc_tables_know(g.code.c_str());
     return Exists(fo.funcs + "/" + g.code + ".txt");
 }
 
@@ -272,7 +274,11 @@ std::vector<Launcher::Game> FindGames(const Folders& fo, std::map<std::string, s
                 // Without one, the picture built into the program (SSR_PC_ART), if any.
                 size_t size = 0;
                 if (g.art.empty())
-                    if (const unsigned char* data = BuiltInArt(g.code.c_str(), size)) Launcher::LoadArt(data, size, g.art);
+                {
+                    const unsigned char* data = BuiltInArt(g.code.c_str(), size);
+                    if (!data) data = BuiltInArt(Launcher::ArtCode(g.code), size); // (a Spanish copy: the English one's)
+                    if (data) Launcher::LoadArt(data, size, g.art);
+                }
 #endif
                 it = artCache.emplace(g.rom, g.art).first;
             }
@@ -968,7 +974,7 @@ bool Start(int& argc, char**& argv)
                "--config", fo.cfg, "--jit" };
     // SoulSilver and HeartGold take their layouts from the program's own tables and must not be
     // given a function table (one switches to the Black games' layouts); the others take theirs.
-    if (game.code != "IPGE" && game.code != "IPKE")
+    if (!Launcher::IsHeartSilver(game.code))
     {
         g_args.push_back("--funcs");
         g_args.push_back(fo.funcs + "/" + game.code + ".txt");

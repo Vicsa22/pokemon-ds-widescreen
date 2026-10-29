@@ -32,10 +32,17 @@
 #ifdef SSR_PC_ART
 // The game list's pictures built into the program (pc_art.cpp, CMakeLists.txt: SSR_PC_ART).
 namespace PcLauncher { const unsigned char* BuiltInArt(const char* code, size_t& size); }
+// The picture built in for a game: its own, else the English copy's for a Spanish copy.
+static const unsigned char* BuiltInArtFor(const std::string& code, size_t& size)
+{
+    const unsigned char* data = PcLauncher::BuiltInArt(code.c_str(), size);
+    return data ? data : PcLauncher::BuiltInArt(Launcher::ArtCode(code), size);
+}
 #endif
 
 // How many chunks the program's SoulSilver tables have: none in a build for the Black games only.
 extern const uint32_t rc_num_chunks;
+bool rc_tables_know(const char code[4]); // (runtime/recomp_api.h: whether the tables serve this game)
 
 namespace SwitchPlatform
 {
@@ -78,7 +85,7 @@ bool RomfsReady()
 bool Playable(const Launcher::Game& g)
 {
     if (!g.known) return false;
-    if (g.code == "IPGE" || g.code == "IPKE") return rc_num_chunks > 0;
+    if (Launcher::IsHeartSilver(g.code)) return rc_num_chunks > 0 && rc_tables_know(g.code.c_str());
     struct stat st;
     if (stat((g.folder + "/funcs.txt").c_str(), &st) == 0) return true;
     return RomfsReady() && stat(("romfs:/funcs/" + g.code + ".txt").c_str(), &st) == 0;
@@ -143,7 +150,7 @@ std::string InstallHomeIcons(const std::vector<Launcher::Game>& games)
         size_t size = 0;
         std::vector<uint32_t> art;
         if (!own)
-            if (const unsigned char* data = PcLauncher::BuiltInArt(g.code.c_str(), size))
+            if (const unsigned char* data = BuiltInArtFor(g.code, size))
                 if (Launcher::LoadArt(data, size, art)) pic.art = art;
 #else
         (void)own;
@@ -528,7 +535,7 @@ bool Start(int& argc, char**& argv)
                 {
                     size_t size = 0;
                     if (g.art.empty())
-                        if (const unsigned char* data = PcLauncher::BuiltInArt(g.code.c_str(), size)) Launcher::LoadArt(data, size, g.art);
+                        if (const unsigned char* data = BuiltInArtFor(g.code, size)) Launcher::LoadArt(data, size, g.art);
                 }
 #endif
                 for (Launcher::Game& g : games)
@@ -560,8 +567,9 @@ bool Start(int& argc, char**& argv)
     const std::string rom = game.rom, gameDir = game.folder;
     char code[5] = {};
     memcpy(code, game.code.data(), std::min<size_t>(4, game.code.size()));
-    // SoulSilver and HeartGold (US): the same program, layouts from its own tables.
-    const bool heartSilver = !strcmp(code, "IPGE") || !strcmp(code, "IPKE");
+    // SoulSilver and HeartGold (US, and the Spanish copies): the same program, layouts from its
+    // own tables.
+    const bool heartSilver = Launcher::IsHeartSilver(code);
     // The save is named after the game (SoulSilver's name is the one earlier builds used), in
     // the game's own folder.
     const std::string saveName = game.saveName;
@@ -596,7 +604,9 @@ bool Start(int& argc, char**& argv)
                             "    and Pokemon White (IRAO), US and Europe;\n"
                             "    Pokemon SoulSilver (IPGE) and Pokemon HeartGold (IPKE), US, with the\n"
                             "    SoulSilver and HeartGold download;\n"
-                            "    Pokemon Platinum (CPUE), with the Platinum download.\n"
+                            "    Pokemon Platinum (CPUE), with the Platinum download;\n"
+                            "  and the Spanish versions (IRES, IRDS, IRBS, IRAS, IPGS, IPKS, CPUS)\n"
+                            "  whose tables this download carries.\n"
                             "  Other languages put the game's code in other places.");
                 return false;
             }

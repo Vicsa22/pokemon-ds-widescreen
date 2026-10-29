@@ -1,4 +1,4 @@
-// Pokemon Platinum (English, CPUE): which of its screens is up, for its layouts.
+// Pokemon Platinum (English, CPUE; Spanish, CPUS): which of its screens is up, for its layouts.
 //
 // Platinum runs like Black 2 (melonDS's JIT, layouts that follow the game's own functions),
 // with a function table made by tools/platinum/funcmap.py from a build of the pokeplatinum
@@ -106,7 +106,7 @@ struct PtFuncs
             if (fseek(f, 0x0C, SEEK_SET) != 0 || fread(code, 1, 4, f) != 4) code[0] = 0;
             fclose(f);
         }
-        on = !strcmp(code, "CPUE");
+        on = !strcmp(code, "CPUE") || !strcmp(code, "CPUS");
         if (!on) return;
         auto find = [&](const char* name) {
             names.push_back(name);

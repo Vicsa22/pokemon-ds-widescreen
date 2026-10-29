@@ -133,6 +133,8 @@ bw_tables() { # romfs-folder
     python3 tools/bw2/funcmap.py build-decomp-pokew2/config/w2_us/arm9 - "$1/funcs/IRDO.txt"
     python3 tools/bw1/funcmap.py build-decomp-aletheia/layout/function_addrs.tsv - "$1/funcs/IRBO.txt"
     python3 tools/bw1/funcmap.py build-decomp-aletheia/layout/function_addrs.tsv - "$1/funcs/IRAO.txt" --white
+    # The Spanish copies' tables, from the shift files in the repository (tools/region_tables.py).
+    python3 tools/region_tables.py "$1/funcs"
 }
 
 case "$GAME" in
@@ -152,6 +154,8 @@ all)
     ROMFS="$HERE/$BUILD/romfs"
     bw_tables "$ROMFS"
     cp tools/platinum/CPUE.txt "$ROMFS/funcs/CPUE.txt"
+    # The Spanish copies' tables, from the shift files in the repository (tools/region_tables.py).
+    python3 tools/region_tables.py "$ROMFS/funcs"
     # The HOME Menu entries' program (HOME MENU ICONS in the list's settings: frontend/switch_forwarder.cpp).
     say "The HOME Menu icons' loader (tools/switch/forwarder)"
     build bash tools/switch/build_forwarder.sh "$HERE/$BUILD/forwarder-build" "$ROMFS/forwarder"
@@ -301,6 +305,8 @@ platinum)
     ROMFS="$HERE/$BUILD/romfs"
     mkdir -p "$ROMFS/funcs"
     cp tools/platinum/CPUE.txt "$ROMFS/funcs/CPUE.txt"
+    # The Spanish copies' tables, from the shift files in the repository (tools/region_tables.py).
+    python3 tools/region_tables.py "$ROMFS/funcs"
     rm -f "$BUILD/icon.jpg"
     icon="${SSR_SWITCH_ICON_PLATINUM:-${SSR_SWITCH_ICON:-}}"
     [ -n "$icon" ] && install -D -m 644 "$icon" "$BUILD/icon.jpg"

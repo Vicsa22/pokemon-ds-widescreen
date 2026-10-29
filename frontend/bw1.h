@@ -1,5 +1,5 @@
-// Pokemon Black and White (US/Europe, IRBO and IRAO): their own screen layouts, on top of the
-// Black 2 ones.
+// Pokemon Black and White (US/Europe, IRBO and IRAO; Spanish, IRBS and IRAS): their own screen
+// layouts, on top of the Black 2 ones.
 //
 // Black runs like Black 2 (melonDS's JIT, layouts that follow the game's own functions), with
 // a function table made by tools/bw1/funcmap.py from the aletheia decompilation. The functions
@@ -58,7 +58,7 @@ public:
             if (fseek(f, 0x0C, SEEK_SET) != 0 || fread(code, 1, 4, f) != 4) code[0] = 0;
             fclose(f);
         }
-        on = !strcmp(code, "IRBO") || !strcmp(code, "IRAO");
+        on = !strcmp(code, "IRBO") || !strcmp(code, "IRAO") || !strcmp(code, "IRBS") || !strcmp(code, "IRAS");
         if (!on) return;
         Fw = &fw;
         auto find = [&](const char* name) {
