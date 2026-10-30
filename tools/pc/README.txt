@@ -75,7 +75,12 @@ WHERE THINGS ARE KEPT
   saves/          your saved games, one per game (black2.sav, soulsilver.sav, ...; a Spanish
                   copy's ends in -es: black2-es.sav)
   settings.cfg    your settings
-  game.log        what happened in the last session (send it with a bug report)
+  game.log        what happened in the last session (send it with a bug report). On
+                  Windows it also says where a crash happened and which overlays
+                  (RivaTuner / MSI Afterburner, Steam, Discord, GeForce Experience) were
+                  in the program. If the game closes as soon as it starts with MSI
+                  Afterburner's overlay on, add Pokemon DS Launcher.exe in RivaTuner
+                  Statistics Server with "Application detection level: None".
 
 To carry on a game from another emulator, put its .sav file in the saves folder with the name
 above (for example saves/platinum.sav). Back your saves up before you do.

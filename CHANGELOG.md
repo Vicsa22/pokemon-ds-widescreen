@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Windows: `game.log` says where a crash happened** (the exception, the address and the DLL it is in) and names the overlays found in the program (RivaTuner Statistics Server / MSI Afterburner, Steam, Discord, GeForce Experience), for the reports of the game closing at start with Afterburner's overlay on. README: the RivaTuner setting that keeps it out of the game meanwhile.
+
 - **VOLUME**, in the pause menu (left and right change it by 10) and on the game list's settings page under DISPLAY: how loud the game is, 0 to 100.
 
 - **PC: the mouse cursor shows in borderless fullscreen while the mouse is in use**, and hides again 2.5 seconds after it stops moving (it was always hidden there, so the touch screen could not be used with the mouse). In a window it is always shown, as before.

@@ -17,6 +17,9 @@
 #include <thread>
 #include "sampler.h"
 #include "ssr_os.h"
+#ifdef _WIN32
+#include "win_diag.h"
+#endif
 #include <vector>
 #include <tuple>
 #include <deque>
@@ -1913,6 +1916,8 @@ int main(int argc, char** argv)
         // The program's own icon (resource 1, when it was built with one) for its windows.
         SDL_SetHint(SDL_HINT_WINDOWS_INTRESOURCE_ICON, "1");
         SDL_SetHint(SDL_HINT_WINDOWS_INTRESOURCE_ICON_SMALL, "1");
+        // (A crash's place and any overlay hooking the graphics in game.log: win_diag.cpp.)
+        SsrWinDiagStart();
         #endif
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) != 0)
         {

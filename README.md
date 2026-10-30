@@ -491,6 +491,12 @@ OLED in handheld mode; a PC has room to spare, and draws the same picture up to
   of the wide view. Loading more of the map, as Black 2 and White 2 do, should
   fix it.
 - PC: speeds on a range of PCs are estimates so far (see above).
+- Windows: with MSI Afterburner's or RivaTuner Statistics Server's overlay on, the game
+  can close as soon as it starts (its OpenGL and Direct3D are hooked while it sets them
+  up; started before the overlay it runs, and the overlay then works). Until it is fixed,
+  in RivaTuner Statistics Server add `Pokemon DS Launcher.exe` with *Application
+  detection level: None*. `game.log` says when the overlay is in the program, and where
+  a crash happened: send it (see [Reporting a bug](#reporting-a-bug)).
 - Mac: tested on one Mac so far (a MacBook Air M1).
 - Android: tested on one phone so far (a Pixel 9 Pro XL).
 - Found a bug? See [Reporting a bug](#reporting-a-bug).
