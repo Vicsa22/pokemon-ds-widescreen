@@ -1308,8 +1308,17 @@ struct Settings
     bool padTouch = false;
     bool showFps = false; // frames shown per second, in a corner
     // A controller's START (+ on the Switch) opens the pause menu instead of being the DS's
-    // START, which the games hardly use (START BUTTON: PAUSE MENU or DS START).
+    // START, which the games hardly use (START BUTTON: PAUSE MENU or DS START). On a PC it is
+    // the DS's START to begin with: there the pause menu has the controller's Guide button (PS,
+    // Home), the keyboard's Esc and START with SELECT, and a START that did not reach the game
+    // was reported as a bug (issue #3). On the Switch and a phone the console keeps HOME to itself, so
+    // START is the menu's. (Saved as pad_start on a PC: the start_button an older version saved
+    // there was "menu" by default, which would have kept START on the menu.)
+#if defined(__SWITCH__) || defined(SSR_PHONE)
     bool startMenu = true;
+#else
+    bool startMenu = false;
+#endif
     // While fast forwarding, the widescreen world at no more than 360 lines (more frames a
     // second, so a faster fast forward where drawing it is the limit). Off on a PC (the PC
     // defaults below), where it is a setting: FAST FORWARD LOW RES.
@@ -1377,7 +1386,11 @@ struct Settings
             else if (k == "pad_touch") padTouch = v == "1";
             else if (k == "show_fps") showFps = v == "1";
             else if (k == "ff_low_res") ffLowRes = v == "1";
+#if defined(__SWITCH__) || defined(SSR_PHONE)
             else if (k == "start_button") startMenu = v != "ds";
+#else
+            else if (k == "pad_start") startMenu = v == "menu"; // (see startMenu: not start_button)
+#endif
             else if (k == "cpu_boost") cpuBoost = v == "1";
             else if (k == "jit") jit = v == "1";
             else if (k == "fastmem") fastMem = v == "1";
@@ -1419,7 +1432,11 @@ struct Settings
         f << "pad_touch=" << (padTouch ? 1 : 0) << "\n";
         f << "show_fps=" << (showFps ? 1 : 0) << "\n";
         f << "ff_low_res=" << (ffLowRes ? 1 : 0) << "\n";
+#if defined(__SWITCH__) || defined(SSR_PHONE)
         f << "start_button=" << (startMenu ? "menu" : "ds") << "\n";
+#else
+        f << "pad_start=" << (startMenu ? "menu" : "ds") << "\n";
+#endif
         f << "battle_buttons=" << (battleButtons == 0 ? "corner" : battleButtons == 2 ? "panel" : "strip") << "\n";
         controls.Save(f);
 #ifdef SSR_PC_LAUNCHER

@@ -60,8 +60,8 @@ cartridge. Copy it in under the game's name, in this folder:
 ## Settings
 
 The same on every platform: on the game list's settings page (**H**, or **Y** / **△** on a
-controller, or SETTINGS at the top), or in the pause menu while you play (**Esc**, or
-**START** / **Options** / **+**). Each option is explained on the settings page.
+controller, or SETTINGS at the top), or in the pause menu while you play (**Esc**, a
+controller's Guide / PS button, or **+** on the Switch). Each option is explained on the settings page.
 
 | Group | Settings |
 |---|---|
@@ -147,8 +147,10 @@ DS game, presented the way it should look on a modern screen.
 It starts in borderless fullscreen at 1080p with 60 fps; **F11** switches to a
 window. In the game list, arrow keys or a controller choose, **Enter** or **A**
 plays, **H** (or a controller's **Y**) opens the settings and **O** opens the
-`roms` folder. While playing, **Esc** (or a controller's **Start** or Guide button)
-opens the pause menu; **QUIT** there goes back to the list.
+`roms` folder. While playing, **Esc** (or a controller's Guide / PS button, or **Start**
+and **Select** together) opens the pause menu; **QUIT** there goes back to the list. A
+controller's **Start** is the DS's START (START BUTTON in the settings can make it open
+the pause menu instead).
 
 **Controls:** any controller (Xbox, PlayStation, Switch Pro and others) plays
 as a DS; hold its right trigger to fast forward. On the keyboard: arrow keys,

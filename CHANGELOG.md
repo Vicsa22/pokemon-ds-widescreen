@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **PC: a controller's START is the DS's START** (it opened the pause menu, which the Guide / PS button opens too). START BUTTON in the settings puts it back on the pause menu; START and SELECT together open the menu as well. On the Switch and a phone START stays on the menu, as before.
+
 - **Widescreen view indoors: no streak from a room's corner.** Standing at the side of a room (a Pokémon Center, Elm's lab), the foot of its wall and its floor were drawn out to the edge of the view as a dark band. Only what the game draws beside the screen over most of the picture (the ground, a flash) is continued to the edge now.
 
 - **Battles in the widescreen view: the message box is wide enough for the Spanish questions.** The end of "¿Qué debería hacer VICTOR?" was cut off under the buttons (the box was only as wide as the English text).

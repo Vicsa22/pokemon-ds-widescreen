@@ -546,8 +546,9 @@ inline std::vector<Setting> SettingsList()
     l.push_back({ "start_button", "START BUTTON", { { "menu", "PAUSE MENU" }, { "ds", "DS START" } }, "menu",
                   "PAUSE MENU: START ON A CONTROLLER OPENS THE PAUSE MENU WHILE PLAYING. DS START: IT IS THE DS START BUTTON (THE GAMES HARDLY USE IT). THE START ON THE SCREEN IS ALWAYS THE DS START." });
 #else
-    l.push_back({ "start_button", "START BUTTON", { { "menu", "PAUSE MENU" }, { "ds", "DS START" } }, "menu",
-                  "PAUSE MENU: START ON A CONTROLLER (MENU ON XBOX / OPTIONS ON PS) OPENS THE PAUSE MENU WHILE PLAYING. DS START: IT IS THE DS START BUTTON (THE GAMES HARDLY USE IT). ENTER IS ALWAYS THE DS START." });
+    // (pad_start, not start_button as on the Switch and a phone: see main.cpp's startMenu.)
+    l.push_back({ "pad_start", "START BUTTON", { { "ds", "DS START" }, { "menu", "PAUSE MENU" } }, "ds",
+                  "DS START: START ON A CONTROLLER (MENU ON XBOX / OPTIONS ON PS) IS THE DS START BUTTON; GUIDE, OR START AND SELECT TOGETHER, OPEN THE PAUSE MENU. PAUSE MENU: START OPENS THE PAUSE MENU INSTEAD. ENTER IS ALWAYS THE DS START." });
 #endif
 #ifndef __SWITCH__
     l.push_back({ "buttons", "BUTTONS", { { "labels", "BY LABEL" }, { "positions", "BY POSITION" } }, "labels",
@@ -640,7 +641,7 @@ inline int GroupOf(const Setting& s)
 {
     if (!s.key) return !strcmp(s.name, "KEYS AND BUTTONS") ? 2 : 4;
     static const char* display[] = { "view", "large_screen", "fullscreen", "smooth", "battle_buttons", "show_fps" };
-    static const char* controls[] = { "start_button", "buttons", "pad_touch" };
+    static const char* controls[] = { "start_button", "pad_start", "buttons", "pad_touch" };
     for (const char* k : display)
         if (!strcmp(s.key, k)) return 0;
     for (const char* k : controls)

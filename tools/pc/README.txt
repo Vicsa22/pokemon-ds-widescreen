@@ -86,8 +86,9 @@ CONTROLS
 
 Controller (Xbox, PlayStation, Switch Pro and others): plays as a DS, with the touch screen's
 buttons shown in the view. Hold the right trigger to fast forward (up to 4x).
-Its START (Menu on Xbox, Options on PlayStation) opens the menu; START BUTTON in the settings
-makes it the DS's START instead.
+Its START (Menu on Xbox, Options on PlayStation) is the DS's START; the Guide (Xbox) / PS button,
+or START and SELECT together, open the pause menu. START BUTTON in the settings can make START
+open the pause menu instead.
 
 Keyboard:
   Arrow keys       D-pad
