@@ -16,7 +16,7 @@ widescreen, 60 fps, up to 4K on a PC and 720p on the Switch.** No more squinting
 | Pokémon SoulSilver and HeartGold | ✅ | ✅ | ✅ |
 | Pokémon Platinum | ✅ | ✅ | ✅ |
 | Pokémon Omega Ruby | 🛠️ in the works (its own project) | | 🛠️ in the works |
-| **Spanish copies** (Blanco, Blanco 2, Platino; see [Spanish copies](#spanish-copies)) | [test build for Windows and Linux](downloads/), without SoulSilver and HeartGold | | |
+| **Spanish copies** (Blanco, Blanco 2, Negro 2, Platino, Plata SoulSilver, Oro HeartGold; see [Spanish copies](#spanish-copies)) | [test build for Windows and Linux](downloads/) | | |
 
 One program per platform: start it and pick the game from the list. The
 downloads are free of the games themselves: you bring your own ROMs, and the
@@ -370,10 +370,10 @@ other sizes. Those tables are made once, by a developer with both ROMs, with
 the repository as addresses only (`tools/bw2/IRES.shifts`,
 `tools/soulsilver/soulsilver-es.json`, ...): a download carries the tables of
 the copies whose files were there when it was built, and shows any other
-Spanish copy as NOT PLAYABLE. Nothing of a game goes in the repository. So far
-the repository has Blanco's, Blanco 2's, Platino's and Oro HeartGold's (the
-last one not yet tried in the program); Negro, Negro 2 and Plata SoulSilver are
-made the same way as soon as both copies are at hand.
+Spanish copy as NOT PLAYABLE. Nothing of a game goes in the repository. The
+repository has six of the seven: Blanco, Blanco 2, Negro 2, Platino, Plata
+SoulSilver and Oro HeartGold; Negro's is made the same way as soon as its ROM
+is at hand.
 
 ---
 

@@ -88,10 +88,16 @@ def build(rng, inserts):
     return funcs, bytes(image), bytes(image2), offs, offs2
 
 
+# The main program's first 2 KB (the secure area) are left out of the matching: the test's
+# functions come after them.
+SECURE = 0x800
+
+
 def main_with_autoload(main_code, itcm_code):
-    """A main program image: the code, then an autoload block (the ITCM's) and the module
-    parameters the nitrocode marker points at, as the start-up code expects them."""
-    main = bytearray(main_code)
+    """A main program image: the secure area (left empty), the code, then an autoload block
+    (the ITCM's) and the module parameters the nitrocode marker points at, as the start-up
+    code expects them."""
+    main = bytearray(SECURE) + bytearray(main_code)
     while len(main) % 4:
         main.append(0)
     list_off = len(main)
@@ -118,7 +124,7 @@ def make_pair(seed=1):
     rom2 = codematch.Rom.from_images('IRES', RAM, main_with_autoload(m2, i2), {36: (ov_base2, o2t)})
     rows, expect = [], {}
     for name, funcs, offs, offs2, base, base2, module in (
-            ('m', m_funcs, m_offs, m_offs2, RAM, RAM, 'main'), ('i', i_funcs, i_offs, i_offs2, ITCM, ITCM, 'itcm'),
+            ('m', m_funcs, m_offs, m_offs2, RAM + SECURE, RAM + SECURE, 'main'), ('i', i_funcs, i_offs, i_offs2, ITCM, ITCM, 'itcm'),
             ('o', o_funcs, o_offs, o_offs2, ov_base1, ov_base2, 'ov36')):
         for k, ((kind, _), off, off2) in enumerate(zip(funcs, offs, offs2)):
             fname = f'{name}_func_{k}'

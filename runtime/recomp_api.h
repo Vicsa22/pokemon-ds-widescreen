@@ -72,7 +72,9 @@ bool rc_portable_needed();
 // Whether the tables serve a ROM with game code `code`: with tables that hold no code, one of
 // the games they were made for; with the recompiled code, SoulSilver and HeartGold (US) only.
 bool rc_tables_know(const char code[4]);
-// Reads the overlays' code through `overlay` (its bytes and size, or null when the ROM has no
-// such overlay) for a ROM with game code `code`. Returns the game's name, or null if the
-// tables do not know that game (then nothing is watched). Before rc_watch_attach and probes.
-const char* rc_portable_load(const char code[4], const unsigned char* (*overlay)(void* user, int id, unsigned* size), void* user);
+// Reads the overlays' code through `overlay` (its bytes, size and load address, or null when
+// the ROM has no such overlay) for a ROM with game code `code`. Returns the game's name, or
+// null if the tables do not know that game (then nothing is watched). Before rc_watch_attach
+// and probes. An overlay this ROM loads elsewhere (a translation's, moved by its texts) moves
+// its section with it: its shifts in the tables say where its functions are.
+const char* rc_portable_load(const char code[4], const unsigned char* (*overlay)(void* user, int id, unsigned* size, unsigned* ram), void* user);
