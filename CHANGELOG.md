@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Widescreen view indoors: no streak from a room's corner.** Standing at the side of a room (a Pokémon Center, Elm's lab), the foot of its wall and its floor were drawn out to the edge of the view as a dark band. Only what the game draws beside the screen over most of the picture (the ground, a flash) is continued to the edge now.
+
 - **Battles in the widescreen view: the message box is wide enough for the Spanish questions.** The end of "¿Qué debería hacer VICTOR?" was cut off under the buttons (the box was only as wide as the English text).
 
 - **Platino, Plata SoulSilver and Oro HeartGold battles: the buttons' labels whole.** The

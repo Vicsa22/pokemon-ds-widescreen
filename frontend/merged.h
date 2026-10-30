@@ -596,18 +596,49 @@ inline const uint32_t* MergedFillWideHoles(const WideImage& wide, int screenX0, 
         holes = (screenX0 > 0 && !(row[0] >> 24)) || (screenX1 < w && !(row[w - 1] >> 24));
     }
     if (!holes) return wide.pixels;
+    // A side is filled only where the filling would show over an eighth of the picture's rows
+    // or more (rows with a hole beyond something drawn in a colour other than black). Over a
+    // few rows only it is a room's edge: standing at a room's side, its floor and the foot of
+    // its wall reach a pixel or two past the screen, and continuing those to the edge of the
+    // view drew the room's corner out as a streak (the black the game draws around the room
+    // does not show either way). The ground the game stops drawing some way out, or a flash
+    // the size of the screen, reaches beside the screen over most of the rows.
+    auto bright = [](uint32_t c) { return ((c >> 16) & 0xFF) > 8 || ((c >> 8) & 0xFF) > 8 || (c & 0xFF) > 8; };
+    int showsLeft = 0, showsRight = 0;
+    for (int y = 0; y < h; y++)
+    {
+        const uint32_t* row = wide.pixels + (size_t)y * w;
+        uint32_t last = 0;
+        bool hole = false;
+        for (int x = screenX0 - 1; x >= 0; x--)
+        {
+            if (row[x] >> 24) last = row[x];
+            else if (last) hole = true;
+        }
+        if (hole && bright(last)) showsLeft++;
+        last = 0;
+        hole = false;
+        for (int x = screenX1; x < w; x++)
+        {
+            if (row[x] >> 24) last = row[x];
+            else if (last) hole = true;
+        }
+        if (hole && bright(last)) showsRight++;
+    }
+    const bool fillLeft = showsLeft * 8 >= h, fillRight = showsRight * 8 >= h;
+    if (!fillLeft && !fillRight) return wide.pixels;
     px.assign(wide.pixels, wide.pixels + (size_t)w * h);
     for (int y = 0; y < h; y++)
     {
         uint32_t* row = &px[(size_t)y * w];
         uint32_t last = 0;
-        for (int x = screenX0 - 1; x >= 0; x--)
+        for (int x = screenX0 - 1; x >= 0 && fillLeft; x--)
         {
             if (row[x] >> 24) last = row[x];
             else if (last) row[x] = last | 0xFF000000;
         }
         last = 0;
-        for (int x = screenX1; x < w; x++)
+        for (int x = screenX1; x < w && fillRight; x++)
         {
             if (row[x] >> 24) last = row[x];
             else if (last) row[x] = last | 0xFF000000;
