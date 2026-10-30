@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <vector>
 
 namespace Controls
 {
@@ -290,6 +291,33 @@ struct Bindings
             if (key[a] >= 0) f << "map_key_" << ActionKey(a) << "=" << key[a] << "\n";
             if (pad[a] >= 0) f << "map_pad_" << ActionKey(a) << "=" << InputKey(pad[a]) << "\n";
         }
+    }
+    // Into a settings file as it is: its map_ lines replaced by these, the rest left alone (the
+    // game list's KEYS AND BUTTONS; the game writes the whole file itself).
+    bool SaveTo(const std::string& path) const
+    {
+        std::vector<std::string> keep;
+        if (FILE* f = fopen(path.c_str(), "r"))
+        {
+            char buf[1024];
+            while (fgets(buf, sizeof buf, f))
+            {
+                std::string l = buf;
+                while (!l.empty() && (l.back() == '\n' || l.back() == '\r')) l.pop_back();
+                if (l.compare(0, 8, "map_key_") && l.compare(0, 8, "map_pad_")) keep.push_back(l);
+            }
+            fclose(f);
+        }
+        FILE* f = fopen(path.c_str(), "w");
+        if (!f) return false;
+        for (const std::string& l : keep) fprintf(f, "%s\n", l.c_str());
+        for (int a = 0; a < COUNT; a++)
+        {
+            if (key[a] >= 0) fprintf(f, "map_key_%s=%d\n", ActionKey(a), key[a]);
+            if (pad[a] >= 0) fprintf(f, "map_pad_%s=%s\n", ActionKey(a), InputKey(pad[a]));
+        }
+        fclose(f);
+        return true;
     }
     // From a settings file (the game list reads it this way).
     void Load(const std::string& path)

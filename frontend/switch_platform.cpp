@@ -23,6 +23,7 @@
 #include "thirdparty/stb_image.h"
 #undef STB_IMAGE_IMPLEMENTATION
 #include "launcher.h"
+#include "controls.h"
 #ifdef SSR_ALL_GAMES
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STBI_WRITE_NO_STDIO
@@ -206,6 +207,30 @@ int PickGame(const std::vector<Launcher::Game>& games, int selected, const std::
     int first = 0, held = 0, result = -1, cols = 3;
     bool guide = false; // the settings page (Launcher::SettingsPage)
     Launcher::SettingsPage page;
+    // The buttons changed in KEYS AND BUTTONS (controls.h): the list follows them (A plays, Y the
+    // settings, B leaves), and the settings page's CONTROLS changes them here too. A controller's
+    // buttons by their labels, as main.cpp reads them on the Switch (Controls::IN_*).
+    Controls::Bindings ctl;
+    ctl.Load(cfgPath);
+    auto mask = [](int in) -> u64 {
+        static const u64 m[Controls::IN_COUNT] = { HidNpadButton_A, HidNpadButton_B, HidNpadButton_X, HidNpadButton_Y,
+            HidNpadButton_Minus, 0, HidNpadButton_Plus, HidNpadButton_StickL, HidNpadButton_StickR, HidNpadButton_L,
+            HidNpadButton_R, HidNpadButton_Up, HidNpadButton_Down, HidNpadButton_Left, HidNpadButton_Right,
+            HidNpadButton_ZL, HidNpadButton_ZR };
+        return in >= 0 && in < Controls::IN_COUNT ? m[in] : 0;
+    };
+    auto action = [&](int a) { return mask(ctl.Pad(a, true)); };
+    bool keysOpen = false;
+    int keysCapture = -1;
+    u64 keysUntil = 0;
+    Menu keysMenu;
+    auto keysBuild = [&]() {
+        keysMenu.items.clear();
+        for (int a = 0; a < Controls::COUNT; a++)
+            keysMenu.items.push_back({ Controls::ActionName(a), keysCapture == a ? "PRESS A BUTTON" : Controls::InputName(ctl.Pad(a, true)) });
+        keysMenu.items.push_back({ "RESET ALL", "" });
+        keysMenu.items.push_back({ "BACK", "" });
+    };
     std::string note;
     int shown = 0;
 #ifdef SSR_ALL_GAMES
@@ -213,6 +238,16 @@ int PickGame(const std::vector<Launcher::Game>& games, int selected, const std::
 #endif
     auto change = [&](int d) {
         const char* key = page.Change(d);
+        if (key && !strcmp(key, "!keys"))
+        {
+            ctl.Load(cfgPath);
+            keysOpen = true;
+            keysCapture = -1;
+            keysMenu.selected = 0;
+            keysMenu.open = true;
+            keysBuild();
+            return;
+        }
 #ifdef SSR_ALL_GAMES
         if (key && !strcmp(key, "!forwarders") && !installIcons)
         {
@@ -244,8 +279,51 @@ int PickGame(const std::vector<Launcher::Game>& games, int selected, const std::
         const bool up = now & HidNpadButton_AnyUp, dn = now & HidNpadButton_AnyDown;
         const bool lf = now & HidNpadButton_AnyLeft, rt = now & HidNpadButton_AnyRight;
         held = (up || dn || lf || rt) ? held + 1 : 0;
+        // KEYS AND BUTTONS: choose one with the D-pad and A, then press the button it should be
+        // (5 seconds without one: as it was); B goes back to the settings page.
+        if (guide && keysOpen)
+        {
+            if (keysCapture >= 0)
+            {
+                for (int in = 0; in < Controls::IN_COUNT; in++)
+                    if (mask(in) && (down & mask(in)))
+                    {
+                        ctl.SetPad(keysCapture, in, true);
+                        ctl.SaveTo(cfgPath);
+                        page.Open(cfgPath, true);
+                        keysCapture = -1;
+                        break;
+                    }
+                if (keysCapture >= 0 && armGetSystemTick() > keysUntil) keysCapture = -1;
+                keysBuild();
+            }
+            else
+            {
+                MenuInput nav;
+                const bool step = held == 1 || (held > 20 && held % 6 == 0);
+                nav.up = step && up;
+                nav.down = step && dn;
+                nav.accept = (down & HidNpadButton_A) != 0;
+                if (down & HidNpadButton_B) keysOpen = false;
+                int dir = 0;
+                const int hit = keysMenu.Update(nav, dir);
+                if (hit >= 0 && hit < Controls::COUNT)
+                {
+                    keysCapture = hit;
+                    keysUntil = armGetSystemTick() + armNsToTicks(5000000000ULL);
+                }
+                else if (hit == Controls::COUNT)
+                {
+                    ctl.Reset();
+                    ctl.SaveTo(cfgPath);
+                    page.Open(cfgPath, true);
+                }
+                else if (hit == Controls::COUNT + 1) keysOpen = false;
+                keysBuild();
+            }
+        }
         // Y: the settings page: up and down choose, left, right and A change, B or Y go back.
-        if (guide)
+        else if (guide)
         {
             const bool step = held == 1 || (held > 20 && held % 6 == 0);
             if (step && (up || dn)) page.Move(up ? -1 : 1);
@@ -256,7 +334,7 @@ int PickGame(const std::vector<Launcher::Game>& games, int selected, const std::
             if (down & HidNpadButton_Y) guide = false;
             if (down & HidNpadButton_Plus) break;
         }
-        else if (down & HidNpadButton_Y)
+        else if (down & (ctl.PadCustom() ? action(Controls::Y) : (u64)HidNpadButton_Y))
         {
             guide = true;
             page.Open(cfgPath);
@@ -275,7 +353,7 @@ int PickGame(const std::vector<Launcher::Game>& games, int selected, const std::
                 selected = to;
                 note.clear();
             }
-            if (down & HidNpadButton_A)
+            if (down & (ctl.PadCustom() ? action(Controls::A) : (u64)HidNpadButton_A))
             {
                 if (Playable(games[selected]))
                 {
@@ -284,10 +362,11 @@ int PickGame(const std::vector<Launcher::Game>& games, int selected, const std::
                 }
                 note = games[selected].known ? "THIS DOWNLOAD DOES NOT HAVE THIS GAME" : "THIS GAME IS NOT ONE THAT THIS PLAYS";
             }
-            if (down & (HidNpadButton_Plus | HidNpadButton_B)) break;
+            if (down & (HidNpadButton_Plus | (ctl.PadCustom() ? action(Controls::B) : (u64)HidNpadButton_B))) break;
         }
         if (guide) page.Draw(canvas, page.group < 0 ? "UP / DOWN: CHOOSE    A: OPEN    B: BACK"
                                                     : "UP / DOWN: CHOOSE    LEFT / RIGHT / A: CHANGE    B: BACK");
+        if (guide && keysOpen) keysMenu.Draw(canvas, "KEYS AND BUTTONS", keysCapture >= 0 ? "OR WAIT 5 SECONDS: AS IT WAS" : "A: CHANGE   B: BACK");
         else cols = Launcher::Draw(canvas, games, selected, first, note);
         u32 stride;
         u32* out = (u32*)framebufferBegin(&fb, &stride);

@@ -1,22 +1,27 @@
 # Pokémon DS Widescreen
 
 **Your favourite DS Pokémon games on a PC (Windows and Linux), a Mac, a Steam
-Deck or other handheld PC, an Android phone or a modded Nintendo Switch: one screen,
+Deck or other handheld PC, an Android phone, an iPhone or iPad, or a modded Nintendo Switch: one screen,
 widescreen, 60 fps, up to 4K on a PC and 720p on the Switch.** No more squinting at two tiny stacked DS screens.
 
-![Pokémon DS Widescreen: Black 2, White 2, Black, White, SoulSilver, HeartGold and Platinum in widescreen at 60 fps, on a Nintendo Switch, a PC, a Steam Deck, an Android phone and a Mac](docs/screenshots/trailer.gif)
+![Pokémon DS Widescreen: Black 2, White 2, Black, White, SoulSilver, HeartGold and Platinum in widescreen at 60 fps, on a Nintendo Switch, a PC, a Steam Deck, an Android phone and a Mac](docs/screenshots/trailer-2.gif)
 
 ## Downloads
 
-| | PC, Mac, Steam Deck and handhelds (Windows, macOS and Linux) | Android | Nintendo Switch |
-|---|---|---|---|
-| **Download: all seven games in one program** | [Windows, Mac and Linux](../../releases/tag/pc-v1) | [pokemon-ds-wide-android.apk](../../releases/tag/android-v1) | [pokemon-ds-wide-all-switch.zip](../../releases/tag/all-games-v2) |
-| Pokémon Black 2 and White 2 | ✅ | ✅ | ✅ |
-| Pokémon Black and White | ✅ | ✅ | ✅ |
-| Pokémon SoulSilver and HeartGold | ✅ | ✅ | ✅ |
-| Pokémon Platinum | ✅ | ✅ | ✅ |
-| Pokémon Omega Ruby | 🛠️ in the works (its own project) | | 🛠️ in the works |
-| **Spanish copies** (all seven; see [Spanish copies](#spanish-copies)) | [test build for Windows and Linux](downloads/) | | |
+| Where you play | Download | Install |
+|---|---|---|
+| **Windows** PC, and Windows handhelds (ROG Ally, Legion Go, MSI Claw) | [pokemon-ds-wide-pc-windows-x86_64.zip](../../releases/download/pc-v1/pokemon-ds-wide-pc-windows-x86_64.zip) | [PC](#on-a-pc-mac-steam-deck-or-handheld-windows-macos-and-linux) |
+| **Mac** with Apple silicon (M1 and newer) | [pokemon-ds-wide-pc-macos-arm64.zip](../../releases/download/pc-v1/pokemon-ds-wide-pc-macos-arm64.zip) | [Mac](#on-a-pc-mac-steam-deck-or-handheld-windows-macos-and-linux) |
+| **Mac** with an Intel processor | [pokemon-ds-wide-pc-macos-x86_64.zip](../../releases/download/pc-v1/pokemon-ds-wide-pc-macos-x86_64.zip) | [Mac](#on-a-pc-mac-steam-deck-or-handheld-windows-macos-and-linux) |
+| **Linux** and the **Steam Deck** | [pokemon-ds-wide-pc-linux-x86_64.tar.gz](../../releases/download/pc-v1/pokemon-ds-wide-pc-linux-x86_64.tar.gz), or as an [AppImage](../../releases/download/pc-v1/pokemon-ds-wide-pc-linux-x86_64.AppImage) (Gear Lever) | [PC](#on-a-pc-mac-steam-deck-or-handheld-windows-macos-and-linux) |
+| **Android** phone (64-bit, Android 7 or newer) | [pokemon-ds-wide-android.apk](../../releases/download/android-v1/pokemon-ds-wide-android.apk) | [Android](#on-android) |
+| **iPhone** and **iPad** (iOS 14 or newer, sideloaded) | [pokemon-ds-wide-ios.ipa](../../releases/download/ios-v1/pokemon-ds-wide-ios.ipa) | [iPhone](#on-an-iphone-or-ipad) |
+| **Nintendo Switch** (homebrew) | [pokemon-ds-wide-all-switch.zip](../../releases/download/all-games-v2/pokemon-ds-wide-all-switch.zip) | [Switch](#on-the-nintendo-switch) |
+| **Spanish copies** (all seven games; see [Spanish copies](#spanish-copies)) | [test build for Windows and Linux](downloads/) | [PC](#on-a-pc-mac-steam-deck-or-handheld-windows-macos-and-linux) |
+
+**All seven games in every download:** Pokémon Black 2, White 2, Black, White, SoulSilver,
+HeartGold and Platinum. Pokémon Omega Ruby is in the works, as its own project. What's new
+in each: [Releases](../../releases).
 
 One program per platform: start it and pick the game from the list. The
 downloads are free of the games themselves: you bring your own ROMs, and the
@@ -33,6 +38,7 @@ cartridge. Copy it in under the game's name, in this folder:
 | Linux AppImage | `~/.local/share/pokemon-ds-wide/saves` |
 | Mac | `~/Library/Application Support/Pokemon DS Widescreen/saves` |
 | Android | the `saves` folder inside the folder you chose for your ROMs |
+| iPhone and iPad | Files app: On My iPhone (or iPad) > Pokemon DS Widescreen > `saves` |
 | Nintendo Switch | `/switch/pokemon-ds-wide/` on the SD card |
 
 | Game | Save name |
@@ -50,6 +56,59 @@ cartridge. Copy it in under the game's name, in this folder:
   [`tools/bw2/convert_save.py`](tools/bw2/convert_save.py).
 - **Check it worked:** the game list shows SAVE FOUND under the game (NEW GAME: not found).
 - **Back up first:** a save copied in replaces the one there under that name.
+
+## Settings
+
+The same on every platform: on the game list's settings page (**H**, or **Y** / **△** on a
+controller, or SETTINGS at the top), or in the pause menu while you play (**Esc**, or
+**START** / **Options** / **+**). Each option is explained on the settings page.
+
+| Group | Settings |
+|---|---|
+| DISPLAY | SCREEN LAYOUT (MERGED: the one widescreen picture), LARGE SCREEN, BORDERLESS FULLSCREEN, SMOOTH SCALING, BATTLE BUTTONS, FPS COUNTER |
+| GRAPHICS | 60 FPS, WIDESCREEN WORLD, WIDE MAP LOADING, 3D RESOLUTION (WORLD DETAIL on the Switch), LOWER RES WHEN BUSY, WORLD ON GPU, FAST FORWARD LOW RES |
+| CONTROLS | **KEYS AND BUTTONS** (give any DS button, the pause menu, fast forward or swapping the screens another key or controller button), START BUTTON, BUTTONS, STICK TOUCH CURSOR |
+| SHORTCUTS | DESKTOP SHORTCUTS (PC), HOME MENU ICONS (Switch): a shortcut for each game |
+
+The pause menu also has RESUME, SAVE STATE, LOAD STATE, FAST FORWARD, CHEATS
+([below](#cheats)), RESET GAME and QUIT (back to the game list). Not every platform has
+every setting: a phone and the Switch are always full screen, for one.
+
+## Cheats
+
+Action Replay codes, turned on and off as you play: **CHEATS** in the pause menu. They go
+in a `cheats` folder (make it if it isn't there):
+
+| Where you play | Folder |
+|---|---|
+| PC (Windows, Linux, Steam Deck) | `cheats` beside the program (next to `saves`) |
+| Linux AppImage | `~/.local/share/pokemon-ds-wide/cheats` |
+| Mac | `~/Library/Application Support/Pokemon DS Widescreen/cheats` |
+| Android | `cheats` inside the folder you chose for your ROMs |
+| iPhone and iPad | Files app: On My iPhone (or iPad) > Pokemon DS Widescreen > `cheats` |
+| Nintendo Switch | `/switch/pokemon-ds-wide/cheats/` on the SD card |
+
+- **A cheat database:** `usrcheat.dat` holds codes for every game; CHEATS lists this
+  game's, in their folders, with the database's note on the chosen one under the menu.
+  The one most people use is DeadSkullzJr's: download it from
+  [his GBAtemp thread](https://gbatemp.net/threads/deadskullzjrs-nds-cheat-databases.488711/)
+  and put `usrcheat.dat` in the `cheats` folder.
+- **Codes of your own:** a text file named after the game's code: `IREO.txt` (Black 2),
+  `IRDO.txt` (White 2), `IRBO.txt` (Black), `IRAO.txt` (White), `IPKE.txt` (HeartGold),
+  `IPGE.txt` (SoulSilver), `CPUE.txt` (Platinum). The cheat's name on a line, its code
+  under it; as many cheats as you like, one after another:
+
+  ```
+  60 FPS battles
+  92247612 00002801
+  A2000E28 00000000
+  12000E28 00000000
+  D2000000 00000000
+  ```
+  melonDS's own cheat files (`IPKE.mch` and so on) work too.
+
+The codes must be for your version of the game (US or Europe). A cheat changes the game's
+memory while it runs: **save first**, and turn it off if the game misbehaves.
 
 ## What is it?
 
@@ -95,8 +154,8 @@ opens the pause menu; **QUIT** there goes back to the list.
 as a DS; hold its right trigger to fast forward. On the keyboard: arrow keys,
 X/Z for A/B, S/A for X/Y, Q/W for L/R, Enter for START, Backspace for SELECT,
 the mouse for the touch screen and Left Shift to fast forward. The `README.txt`
-inside has the full list. **CONTROLS > KEYS AND BUTTONS** in the pause menu changes any of
-them, on the keyboard and on a controller (the game list follows the ones you change).
+inside has the full list. **CONTROLS > KEYS AND BUTTONS** in the pause menu (or on the game list's
+settings page) changes any of them, on the keyboard and on a controller (the game list follows the ones you change).
 
 **Saves** go in the `saves` folder, one per game (`black2.sav`, `soulsilver.sav`,
 `platinum.sav`, ...). To carry on from another emulator, put its `.sav` there
@@ -106,8 +165,7 @@ code (`IREO.jpg` for Black 2, see the `README.txt`).
 
 ![The settings page: each option with its value and what it does, 3D RESOLUTION chosen at 1080P](docs/screenshots/pc-settings-page.png)
 
-**Settings:** the settings page in the game list sets everything in the pause
-menu before you play, each option explained. The ones that matter most on a PC:
+**Settings** (all of them: [Settings](#settings)). The ones that matter most on a PC:
 
 | Setting | Starts at | What it does |
 |---|---|---|
@@ -232,7 +290,7 @@ game you start the Homebrew Menu from, or as the global profile.
 Without sys-clk the games run at the console's normal speeds and drop frames
 in busy places.
 
-**Settings** (the settings page in the game list, or the pause menu):
+**Settings** (all of them: [Settings](#settings)). Recommended on the Switch:
 
 | Setting | Recommended | What it does |
 |---|---|---|
@@ -272,6 +330,40 @@ settings and `game.log` are in `Android/data/io.github.mamesj.pokemonds/files`.
 by the processor at 720P to start (3D RESOLUTION in the settings: Y in the list,
 or SETTINGS at the top right). Tested on a Pixel 9 Pro XL, where it runs at full
 speed; please tell us how yours runs (see [Reporting a bug](#reporting-a-bug)).
+
+---
+
+## On an iPhone or iPad
+
+Apple only lets apps from its App Store install on their own, so this one is **sideloaded**:
+a sideloading tool signs it with your own Apple ID (a free one works) and puts it on your
+iPhone. From a Windows PC or a Mac:
+
+1. **Install a sideloading tool:** [Sideloadly](https://sideloadly.io) or
+   [AltStore](https://altstore.io) (on Windows, also Apple's **Apple Devices** app or iTunes).
+2. **Download** [`pokemon-ds-wide-ios.ipa`](../../releases/tag/ios-v1), plug in your iPhone
+   (tap **Trust** on it), and give the IPA to the tool with your Apple ID.
+3. **On the iPhone:** turn on **Settings > Privacy & Security > Developer Mode** (it restarts),
+   then trust your Apple ID in **Settings > General > VPN & Device Management**.
+4. **Put your ROMs** in the Files app: **On My iPhone > Pokemon DS Widescreen > roms** (AirDrop,
+   iCloud Drive, or from a PC: the Apple Devices app's Files tab, or the Finder on a Mac).
+   **FOLDER** at the top of the game list opens that folder. Tap a game twice to play.
+
+With a free Apple ID, iOS stops opening sideloaded apps after 7 days: sideload it again (your
+saves stay). AltStore and SideStore can do that for you.
+
+**Controls:** as on Android: on-screen buttons while you play by touch (MENU at the top for
+the pause menu), or a controller (Xbox, PlayStation, Backbone and others), which hides them.
+
+**Saves, settings, cheats and `game.log`** are all in that Pokemon DS Widescreen folder in the
+Files app.
+
+**What to expect:** iOS lets no app make code as it runs, so the faster way the other
+versions run the DS (melonDS's JIT) is left out, and a recent iPhone (an iPhone 13 or newer)
+is the most likely to keep up. The 3D world is drawn by the processor at 720P to start (3D
+RESOLUTION in the settings; 540P or LOWER RES WHEN BUSY if yours slows down). QUIT in the
+pause menu may close the app rather than go back to the list (open it again to pick a game).
+Please tell us how it runs on yours, with your model (see [Reporting a bug](#reporting-a-bug)).
 
 ---
 
@@ -416,8 +508,9 @@ version and the **`game.log`** file, which says what the program did:
 1. **Find it:** on a PC, `game.log` is in the folder you unpacked the download
    to. On the Switch it is in the game's folder on the SD card:
    `/switch/pokemon-ds-wide/` for the all-in-one, otherwise the game's own
-   folder (e.g. `/switch/pokemon-black2-wide/`). It is written again each time
-   the game starts, so copy it straight after the problem.
+   folder (e.g. `/switch/pokemon-black2-wide/`). On an iPhone or iPad it is in the
+   Files app: On My iPhone > Pokemon DS Widescreen (share it from there). It is
+   written again each time the game starts, so copy it straight after the problem.
 2. **Switch: get it onto a computer.** Put the SD card in a card reader; or,
    leaving it in the Switch, use Hekate's **Tools > USB Tools > SD Card** (or
    DBI's MTP mode) to see the card on the computer over USB; or an FTP app such
