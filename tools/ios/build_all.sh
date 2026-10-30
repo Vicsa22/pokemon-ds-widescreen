@@ -129,6 +129,7 @@ cat > "$APP/Info.plist" <<PLIST
 <key>UILaunchScreen</key><dict/>
 <key>UIFileSharingEnabled</key><true/>
 <key>LSSupportsOpeningDocumentsInPlace</key><true/>
+<key>UIApplicationSupportsIndirectInputEvents</key><true/>
 <key>GCSupportsControllerUserInteraction</key><true/>
 <key>GCSupportedGameControllers</key><array><dict><key>ProfileName</key><string>ExtendedGamepad</string></dict></array>
 <key>ITSAppUsesNonExemptEncryption</key><false/>
