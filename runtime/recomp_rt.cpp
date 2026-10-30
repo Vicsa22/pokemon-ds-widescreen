@@ -193,7 +193,7 @@ bool rc_tables_know(const char code[4])
     return false;
 }
 
-const char* rc_portable_load(const char code[4], const unsigned char* (*overlay)(void*, int, unsigned*), void* user)
+const char* rc_portable_load(const char code[4], const unsigned char* (*overlay)(void*, int, unsigned*, unsigned*), void* user)
 {
     if (!portable) return nullptr;
     portableLoaded = true;
@@ -210,13 +210,21 @@ const char* rc_portable_load(const char code[4], const unsigned char* (*overlay)
     for (u32 s = 0; s < rc_num_sections; s++)
     {
         if (portable->overlayOf[s] < 0) continue;
-        unsigned size = 0;
-        const unsigned char* data = overlay(user, portable->overlayOf[s], &size);
+        unsigned size = 0, ram = 0;
+        const unsigned char* data = overlay(user, portable->overlayOf[s], &size, &ram);
         if (!data) { missing++; continue; }
         portableImages[s].assign(data, data + size);
         rc_sections[s].image = portableImages[s].data();
         // (An overlay can be a little longer in another game: HeartGold's title screen.)
         if (size > rc_sections[s].size) rc_sections[s].size = size;
+        // (Or loaded at another address: a translation's, whose functions the game's shifts
+        // move by as much. The image is compared where the ROM loads it.)
+        if (ram && ram != rc_sections[s].base)
+        {
+            fprintf(stderr, "[recomp] %s: overlay %d is at %08x in this ROM (%08x in SoulSilver)\n", rc_sections[s].name,
+                    portable->overlayOf[s], ram, rc_sections[s].base);
+            rc_sections[s].base = ram;
+        }
         loaded++;
     }
     chunkStart.clear();

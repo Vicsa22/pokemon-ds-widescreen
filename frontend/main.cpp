@@ -1630,10 +1630,11 @@ int main(int argc, char** argv)
             fclose(f);
         }
         if (overlays.Open(opt.rom))
-            rc_portable_load(code, [](void* user, int id, unsigned* size) -> const unsigned char* {
+            rc_portable_load(code, [](void* user, int id, unsigned* size, unsigned* ram) -> const unsigned char* {
                 const NdsOverlays::Overlay* ov = static_cast<NdsOverlays*>(user)->Get((uint32_t)id);
                 if (!ov) return nullptr;
                 *size = (unsigned)ov->data.size();
+                *ram = ov->ram;
                 return ov->data.data();
             }, &overlays);
         else
