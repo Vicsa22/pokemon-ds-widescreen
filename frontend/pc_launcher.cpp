@@ -1099,7 +1099,13 @@ bool Start(int& argc, char**& argv)
         remove(prev.c_str());
         rename(logPath.c_str(), prev.c_str());
     }
+    // Unbuffered on Windows: its C library has no line buffering (_IOLBF buffers fully there), so
+    // the log would stay empty until the program ended, and be lost in a crash.
+#ifdef _WIN32
+    if (freopen(logPath.c_str(), "w", stderr)) setvbuf(stderr, nullptr, _IONBF, 0);
+#else
     if (freopen(logPath.c_str(), "w", stderr)) setvbuf(stderr, nullptr, _IOLBF, 0);
+#endif
     fprintf(stderr, "[launcher] folder %s\n", fo.dir.c_str());
 
     std::map<std::string, std::vector<uint32_t>> artCache;
@@ -1173,6 +1179,10 @@ void Finish()
 #if defined(__ANDROID__)
     JavaVoid("restart"); // (GameActivity: a new process, which opens on the list)
 #elif defined(_WIN32)
+    // game.log is closed first: the new process keeps it as game-previous.log, which Windows
+    // refuses while this one still has it open (the game's log was lost that way, and the
+    // list's few lines took its place).
+    fclose(stderr);
     wchar_t self[32768];
     const DWORD n = GetModuleFileNameW(nullptr, self, 32768);
     if (n == 0 || n >= 32768) return;

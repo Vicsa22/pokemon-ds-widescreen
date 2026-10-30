@@ -90,6 +90,7 @@ target_compile_options(gamecode PRIVATE -O1 -g0 -fno-exceptions -fno-rtti "$<$<C
 set(SSRECOMP_SOURCES
     frontend/main.cpp
     frontend/platform.cpp
+    frontend/discord_rpc.cpp
     runtime/recomp_rt.cpp
     runtime/recomp_mem.cpp
     "${SSR_GENERATED_DIR}/apps_table.cpp"

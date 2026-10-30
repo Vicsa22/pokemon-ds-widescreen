@@ -65,7 +65,7 @@ controller's Guide / PS button, or **+** on the Switch). Each option is explaine
 
 | Group | Settings |
 |---|---|
-| DISPLAY | SCREEN LAYOUT (MERGED: the one widescreen picture), LARGE SCREEN, BORDERLESS FULLSCREEN, SMOOTH SCALING, BATTLE BUTTONS, FPS COUNTER, VOLUME |
+| DISPLAY | SCREEN LAYOUT (MERGED: the one widescreen picture), LARGE SCREEN, BORDERLESS FULLSCREEN, SMOOTH SCALING, BATTLE BUTTONS, FPS COUNTER, VOLUME, DISCORD PRESENCE (PC: Discord shows the game you play and for how long) |
 | GRAPHICS | 60 FPS, WIDESCREEN WORLD, WIDE MAP LOADING, 3D RESOLUTION (WORLD DETAIL on the Switch), LOWER RES WHEN BUSY, WORLD ON GPU, FAST FORWARD LOW RES |
 | CONTROLS | **KEYS AND BUTTONS** (give any DS button, the pause menu, fast forward or swapping the screens another key or controller button), START BUTTON, BUTTONS, STICK TOUCH CURSOR |
 | SHORTCUTS | DESKTOP SHORTCUTS (PC), HOME MENU ICONS (Switch): a shortcut for each game |

@@ -20,6 +20,7 @@
 #ifdef _WIN32
 #include "win_diag.h"
 #endif
+#include "discord_rpc.h"
 #include <vector>
 #include <tuple>
 #include <deque>
@@ -1311,6 +1312,7 @@ struct Settings
     bool padTouch = false;
     bool showFps = false; // frames shown per second, in a corner
     int volume = 100;     // the sound's loudness, 0..100 (VOLUME; the samples are scaled before SDL)
+    bool discord = true;  // Discord Rich Presence on a PC (DISCORD PRESENCE; frontend/discord_rpc.h)
     // A controller's START (+ on the Switch) opens the pause menu instead of being the DS's
     // START, which the games hardly use (START BUTTON: PAUSE MENU or DS START). On a PC it is
     // the DS's START to begin with: there the pause menu has the controller's Guide button (PS,
@@ -1390,6 +1392,7 @@ struct Settings
             else if (k == "pad_touch") padTouch = v == "1";
             else if (k == "show_fps") showFps = v == "1";
             else if (k == "volume") volume = std::clamp(atoi(v.c_str()), 0, 100);
+            else if (k == "discord") discord = v == "1";
             else if (k == "ff_low_res") ffLowRes = v == "1";
 #if defined(__SWITCH__) || defined(SSR_PHONE)
             else if (k == "start_button") startMenu = v != "ds";
@@ -1437,6 +1440,7 @@ struct Settings
         f << "pad_touch=" << (padTouch ? 1 : 0) << "\n";
         f << "show_fps=" << (showFps ? 1 : 0) << "\n";
         f << "volume=" << volume << "\n";
+        f << "discord=" << (discord ? 1 : 0) << "\n";
         f << "ff_low_res=" << (ffLowRes ? 1 : 0) << "\n";
 #if defined(__SWITCH__) || defined(SSR_PHONE)
         f << "start_button=" << (startMenu ? "menu" : "ds") << "\n";
@@ -1608,6 +1612,10 @@ int main(int argc, char** argv)
     // from the start. (Not in a lockstep test, which compares two runs of the game as it is.)
     Cheats::List cheats;
     const std::string gameCode = rom.size() >= 0x200 ? std::string((const char*)&rom[0x0C], 4) : std::string();
+    // Discord Rich Presence (discord_rpc.h): the game's name, and its code in lower case as the
+    // key of its art. Started once the window is up; DISCORD PRESENCE in the menu stops and starts it.
+    std::string discordName, discordKey = gameCode;
+    for (char& c : discordKey) c = (char)tolower((unsigned char)c);
     if (!opt.lockstep && rom.size() >= 0x200)
     {
         cheats.Load(Cheats::FolderFor(opt.save), gameCode, rom.data());
@@ -1978,6 +1986,8 @@ int main(int argc, char** argv)
             fprintf(stderr, "cannot create window: %s\n", SDL_GetError());
             return 1;
         }
+        discordName = windowTitle;
+        if (cfg.discord) DiscordRpc::Start(discordName, discordKey, discordName);
         {
             // In every log: bug reports about the picture need to know this.
             SDL_RendererInfo info;
@@ -3955,7 +3965,7 @@ int main(int argc, char** argv)
     {
         M_RESUME, M_LAYOUT, M_LARGE, M_FPS60, M_FULLSCREEN, M_SMOOTH, M_WIDE, M_WIDEMAP, M_BATTLEBUTTONS,
         M_WIDELINES, M_AUTODETAIL, M_WIDEGPU, M_GPU3D, M_SHOWFPS, M_BUTTONS, M_PADTOUCH, M_EMULATION,
-        M_CONTROLS, M_STARTBTN, M_FAST, M_VOLUME, M_FFLOWRES, M_SAVESTATE, M_LOADSTATE, M_RESET, M_QUIT,
+        M_CONTROLS, M_STARTBTN, M_FAST, M_VOLUME, M_DISCORD, M_FFLOWRES, M_SAVESTATE, M_LOADSTATE, M_RESET, M_QUIT,
         M_DISPLAY, M_GRAPHICS, M_CONTROLMENU, M_BACK, M_CHEATS, M_NOTHING,
         M_CHEAT0 = 1000 // (M_CHEAT0 + i: cheat i, CHEATS)
     };
@@ -4049,6 +4059,9 @@ int main(int argc, char** argv)
             add(M_BATTLEBUTTONS, "BATTLE BUTTONS",
                 !funcWatchOn || pt.on ? "-" : cfg.battleButtons == 2 ? "PANEL" : cfg.battleButtons == 0 || !bw1.on ? "CORNER" : "STRIP");
             add(M_SHOWFPS, "FPS COUNTER", onOff(cfg.showFps));
+#if !defined(__SWITCH__) && !defined(SSR_PHONE)
+            add(M_DISCORD, "DISCORD PRESENCE", !DiscordRpc::ClientId[0] ? "NOT BUILT IN" : onOff(cfg.discord) + (!cfg.discord || DiscordRpc::Connected() ? "" : DiscordRpc::Refused() ? " (DISCORD REFUSED, SEE GAME.LOG)" : " (NO DISCORD)"));
+#endif
             add(M_BACK, "BACK", "");
         }
         else if (menuPage == PAGE_GRAPHICS)
@@ -4864,6 +4877,7 @@ int main(int argc, char** argv)
                 const bool show = !cfg.fullscreen || SDL_GetTicks() - mouseSeenAt < 2500;
                 if ((SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE) != show) SDL_ShowCursor(show ? SDL_ENABLE : SDL_DISABLE);
             }
+            DiscordRpc::Tick();
             SDL_GetRendererOutputSize(renderer, &outW, &outH);
             // SDL mouse positions are window points; layout, cursor and touch use output pixels.
             // Refresh each frame for resize and movement between Retina/external displays.
@@ -5309,6 +5323,11 @@ int main(int argc, char** argv)
                 // Left and right by 10; A (dir 0) up by 10, round to 0 after 100.
                 cfg.volume = dir < 0 ? std::max(0, cfg.volume - 10) : dir > 0 ? std::min(100, cfg.volume + 10)
                            : cfg.volume >= 100 ? 0 : cfg.volume + 10;
+                break;
+            case M_DISCORD:
+                cfg.discord = !cfg.discord;
+                if (cfg.discord) DiscordRpc::Start(discordName, discordKey, discordName);
+                else DiscordRpc::Stop();
                 break;
 #ifndef __SWITCH__
             case M_BUTTONS:
@@ -6853,6 +6872,7 @@ int main(int argc, char** argv)
             SDL_ClearQueuedAudio(audio);
             SDL_CloseAudioDevice(audio);
         }
+        DiscordRpc::Stop();
         exitStep("SDL");
         SDL_Quit();
     }

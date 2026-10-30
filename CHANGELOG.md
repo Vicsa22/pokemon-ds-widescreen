@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **PC: Discord Rich Presence** (DISCORD PRESENCE under DISPLAY, on to start): while you play, Discord shows the game's name and the time played, with the game's picture when the Discord application has one (an art asset named by the game's code, `ipks` for the Spanish HeartGold), else the one named `logo`, else none. It talks to Discord directly (no SDK); nothing is sent when Discord is not running.
+
+- **Windows: `game.log` is written as the game runs**, not only when it ends: it was empty while the game was open and lost in a crash. And QUIT keeps it as `game-previous.log`, as it should: the list that opens next replaced it.
+
 - **Windows: `game.log` says where a crash happened** (the exception, the address and the DLL it is in) and names the overlays found in the program (RivaTuner Statistics Server / MSI Afterburner, Steam, Discord, GeForce Experience), for the reports of the game closing at start with Afterburner's overlay on. README: the RivaTuner setting that keeps it out of the game meanwhile.
 
 - **VOLUME**, in the pause menu (left and right change it by 10) and on the game list's settings page under DISPLAY: how loud the game is, 0 to 100.
