@@ -1,7 +1,7 @@
 # Pokémon DS Widescreen
 
 **Your favourite DS Pokémon games on a PC (Windows and Linux), a Mac, a Steam
-Deck or other handheld PC, an Android phone or a modded Nintendo Switch: one screen,
+Deck or other handheld PC, an Android phone, an iPhone or iPad, or a modded Nintendo Switch: one screen,
 widescreen, 60 fps, up to 4K on a PC and 720p on the Switch.** No more squinting at two tiny stacked DS screens.
 
 ![Pokémon DS Widescreen: Black 2, White 2, Black, White, SoulSilver, HeartGold and Platinum in widescreen at 60 fps, on a Nintendo Switch, a PC, a Steam Deck, an Android phone and a Mac](docs/screenshots/trailer-2.gif)
@@ -15,6 +15,7 @@ widescreen, 60 fps, up to 4K on a PC and 720p on the Switch.** No more squinting
 | **Mac** with an Intel processor | [pokemon-ds-wide-pc-macos-x86_64.zip](../../releases/download/pc-v1/pokemon-ds-wide-pc-macos-x86_64.zip) | [Mac](#on-a-pc-mac-steam-deck-or-handheld-windows-macos-and-linux) |
 | **Linux** and the **Steam Deck** | [pokemon-ds-wide-pc-linux-x86_64.tar.gz](../../releases/download/pc-v1/pokemon-ds-wide-pc-linux-x86_64.tar.gz), or as an [AppImage](../../releases/download/pc-v1/pokemon-ds-wide-pc-linux-x86_64.AppImage) (Gear Lever) | [PC](#on-a-pc-mac-steam-deck-or-handheld-windows-macos-and-linux) |
 | **Android** phone (64-bit, Android 7 or newer) | [pokemon-ds-wide-android.apk](../../releases/download/android-v1/pokemon-ds-wide-android.apk) | [Android](#on-android) |
+| **iPhone** and **iPad** (iOS 14 or newer, sideloaded; new and not yet tested on a real iPhone) | [pokemon-ds-wide-ios.ipa](../../releases/download/ios-v1/pokemon-ds-wide-ios.ipa) | [iPhone](#on-an-iphone-or-ipad) |
 | **Nintendo Switch** (homebrew) | [pokemon-ds-wide-all-switch.zip](../../releases/download/all-games-v2/pokemon-ds-wide-all-switch.zip) | [Switch](#on-the-nintendo-switch) |
 
 **All seven games in every download:** Pokémon Black 2, White 2, Black, White, SoulSilver,
@@ -36,6 +37,7 @@ cartridge. Copy it in under the game's name, in this folder:
 | Linux AppImage | `~/.local/share/pokemon-ds-wide/saves` |
 | Mac | `~/Library/Application Support/Pokemon DS Widescreen/saves` |
 | Android | the `saves` folder inside the folder you chose for your ROMs |
+| iPhone and iPad | Files app: On My iPhone (or iPad) > Pokemon DS Widescreen > `saves` |
 | Nintendo Switch | `/switch/pokemon-ds-wide/` on the SD card |
 
 | Game | Save name |
@@ -81,6 +83,7 @@ in a `cheats` folder (make it if it isn't there):
 | Linux AppImage | `~/.local/share/pokemon-ds-wide/cheats` |
 | Mac | `~/Library/Application Support/Pokemon DS Widescreen/cheats` |
 | Android | `cheats` inside the folder you chose for your ROMs |
+| iPhone and iPad | Files app: On My iPhone (or iPad) > Pokemon DS Widescreen > `cheats` |
 | Nintendo Switch | `/switch/pokemon-ds-wide/cheats/` on the SD card |
 
 - **A cheat database:** `usrcheat.dat` holds codes for every game; CHEATS lists this
@@ -327,6 +330,43 @@ speed; please tell us how yours runs (see [Reporting a bug](#reporting-a-bug)).
 
 ---
 
+## On an iPhone or iPad
+
+**New, and not yet tested on a real iPhone or iPad** (only in Apple's iOS Simulator): please
+tell us how it goes, good or bad, with your model and its `game.log` (see
+[Reporting a bug](#reporting-a-bug)).
+
+Apple only lets apps from its App Store install on their own, so this one is **sideloaded**:
+a sideloading tool signs it with your own Apple ID (a free one works) and puts it on your
+iPhone. From a Windows PC or a Mac:
+
+1. **Install a sideloading tool:** [Sideloadly](https://sideloadly.io) or
+   [AltStore](https://altstore.io) (on Windows, also Apple's **Apple Devices** app or iTunes).
+2. **Download** [`pokemon-ds-wide-ios.ipa`](../../releases/tag/ios-v1), plug in your iPhone
+   (tap **Trust** on it), and give the IPA to the tool with your Apple ID.
+3. **On the iPhone:** turn on **Settings > Privacy & Security > Developer Mode** (it restarts),
+   then trust your Apple ID in **Settings > General > VPN & Device Management**.
+4. **Put your ROMs** in the Files app: **On My iPhone > Pokemon DS Widescreen > roms** (AirDrop,
+   iCloud Drive, or from a PC: the Apple Devices app's Files tab, or the Finder on a Mac).
+   **FOLDER** at the top of the game list opens that folder. Tap a game twice to play.
+
+With a free Apple ID, iOS stops opening sideloaded apps after 7 days: sideload it again (your
+saves stay). AltStore and SideStore can do that for you.
+
+**Controls:** as on Android: on-screen buttons while you play by touch (MENU at the top for
+the pause menu), or a controller (Xbox, PlayStation, Backbone and others), which hides them.
+
+**Saves, settings, cheats and `game.log`** are all in that Pokemon DS Widescreen folder in the
+Files app.
+
+**What to expect:** iOS lets no app make code as it runs, so the faster way the other
+versions run the DS (melonDS's JIT) is left out, and a recent iPhone (an iPhone 13 or newer)
+is the most likely to keep up. The 3D world is drawn by the processor at 720P to start (3D
+RESOLUTION in the settings; 540P or LOWER RES WHEN BUSY if yours slows down). QUIT in the
+pause menu may close the app rather than go back to the list (open it again to pick a game).
+
+---
+
 ## The games
 
 ### Pokémon Black 2 and White 2
@@ -433,8 +473,9 @@ version and the **`game.log`** file, which says what the program did:
 1. **Find it:** on a PC, `game.log` is in the folder you unpacked the download
    to. On the Switch it is in the game's folder on the SD card:
    `/switch/pokemon-ds-wide/` for the all-in-one, otherwise the game's own
-   folder (e.g. `/switch/pokemon-black2-wide/`). It is written again each time
-   the game starts, so copy it straight after the problem.
+   folder (e.g. `/switch/pokemon-black2-wide/`). On an iPhone or iPad it is in the
+   Files app: On My iPhone > Pokemon DS Widescreen (share it from there). It is
+   written again each time the game starts, so copy it straight after the problem.
 2. **Switch: get it onto a computer.** Put the SD card in a card reader; or,
    leaving it in the Switch, use Hekate's **Tools > USB Tools > SD Card** (or
    DBI's MTP mode) to see the card on the computer over USB; or an FTP app such
