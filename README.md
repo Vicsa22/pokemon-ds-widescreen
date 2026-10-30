@@ -15,7 +15,7 @@ widescreen, 60 fps, up to 4K on a PC and 720p on the Switch.** No more squinting
 | **Mac** with an Intel processor | [pokemon-ds-wide-pc-macos-x86_64.zip](../../releases/download/pc-v1/pokemon-ds-wide-pc-macos-x86_64.zip) | [Mac](#on-a-pc-mac-steam-deck-or-handheld-windows-macos-and-linux) |
 | **Linux** and the **Steam Deck** | [pokemon-ds-wide-pc-linux-x86_64.tar.gz](../../releases/download/pc-v1/pokemon-ds-wide-pc-linux-x86_64.tar.gz), or as an [AppImage](../../releases/download/pc-v1/pokemon-ds-wide-pc-linux-x86_64.AppImage) (Gear Lever) | [PC](#on-a-pc-mac-steam-deck-or-handheld-windows-macos-and-linux) |
 | **Android** phone (64-bit, Android 7 or newer) | [pokemon-ds-wide-android.apk](../../releases/download/android-v1/pokemon-ds-wide-android.apk) | [Android](#on-android) |
-| **iPhone** and **iPad** (iOS 14 or newer, sideloaded; new and not yet tested on a real iPhone) | [pokemon-ds-wide-ios.ipa](../../releases/download/ios-v1/pokemon-ds-wide-ios.ipa) | [iPhone](#on-an-iphone-or-ipad) |
+| **iPhone** and **iPad** (iOS 14 or newer, sideloaded) | [pokemon-ds-wide-ios.ipa](../../releases/download/ios-v1/pokemon-ds-wide-ios.ipa) | [iPhone](#on-an-iphone-or-ipad) |
 | **Nintendo Switch** (homebrew) | [pokemon-ds-wide-all-switch.zip](../../releases/download/all-games-v2/pokemon-ds-wide-all-switch.zip) | [Switch](#on-the-nintendo-switch) |
 
 **All seven games in every download:** Pokémon Black 2, White 2, Black, White, SoulSilver,
@@ -332,10 +332,6 @@ speed; please tell us how yours runs (see [Reporting a bug](#reporting-a-bug)).
 
 ## On an iPhone or iPad
 
-**New, and not yet tested on a real iPhone or iPad** (only in Apple's iOS Simulator): please
-tell us how it goes, good or bad, with your model and its `game.log` (see
-[Reporting a bug](#reporting-a-bug)).
-
 Apple only lets apps from its App Store install on their own, so this one is **sideloaded**:
 a sideloading tool signs it with your own Apple ID (a free one works) and puts it on your
 iPhone. From a Windows PC or a Mac:
@@ -364,6 +360,7 @@ versions run the DS (melonDS's JIT) is left out, and a recent iPhone (an iPhone 
 is the most likely to keep up. The 3D world is drawn by the processor at 720P to start (3D
 RESOLUTION in the settings; 540P or LOWER RES WHEN BUSY if yours slows down). QUIT in the
 pause menu may close the app rather than go back to the list (open it again to pick a game).
+Please tell us how it runs on yours, with your model (see [Reporting a bug](#reporting-a-bug)).
 
 ---
 
