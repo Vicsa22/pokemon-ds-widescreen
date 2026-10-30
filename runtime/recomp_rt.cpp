@@ -206,7 +206,7 @@ const char* rc_portable_load(const char code[4], const unsigned char* (*overlay)
         return nullptr;
     }
     portableImages.assign(rc_num_sections, {});
-    unsigned loaded = 0, missing = 0;
+    unsigned loaded = 0, missing = 0, moved = 0;
     for (u32 s = 0; s < rc_num_sections; s++)
     {
         if (portable->overlayOf[s] < 0) continue;
@@ -221,16 +221,15 @@ const char* rc_portable_load(const char code[4], const unsigned char* (*overlay)
         // move by as much. The image is compared where the ROM loads it.)
         if (ram && ram != rc_sections[s].base)
         {
-            fprintf(stderr, "[recomp] %s: overlay %d is at %08x in this ROM (%08x in SoulSilver)\n", rc_sections[s].name,
-                    portable->overlayOf[s], ram, rc_sections[s].base);
             rc_sections[s].base = ram;
+            moved++;
         }
         loaded++;
     }
     chunkStart.clear();
     ChunkAddresses();
-    fprintf(stderr, "[recomp] %s (%.4s): code of %u overlays read from the ROM%s\n", portableGame->name, code, loaded,
-        missing ? ", some missing" : "");
+    fprintf(stderr, "[recomp] %s (%.4s): code of %u overlays read from the ROM%s%s\n", portableGame->name, code, loaded,
+        missing ? ", some missing" : "", moved ? " (loaded at other addresses than SoulSilver's: their sections moved with them)" : "");
     return portableGame->name;
 }
 
