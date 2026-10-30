@@ -10,13 +10,13 @@
   games and Platinum) or `tools/soulsilver/match_heartgold.py` (SoulSilver and HeartGold) once,
   and the shift files it writes (addresses only) go in the repository; the builds make the
   tables from them (`tools/region_tables.py`). A download without a copy's tables shows that
-  copy as NOT PLAYABLE. Six of the seven have theirs: Blanco (`tools/bw1/IRAS.shifts`), Blanco 2
-  (`tools/bw2/IRDS.shifts`), Negro 2 (`tools/bw2/IRES.shifts`), Platino
-  (`tools/platinum/CPUS.shifts`), Plata SoulSilver (`tools/soulsilver/soulsilver-es.json`) and Oro
-  HeartGold (`tools/soulsilver/heartgold-es.json`): 99.2% to 99.9% of their functions found, the
-  opening laid out on one screen as in the English copies, Blanco's first battle in the wide
-  battle view, the Black games' 8 MB and wider map windows on, SoulSilver's first menu skipped.
-  Negro waits for its ROM. A translation of SoulSilver loads every overlay a little higher
+  copy as NOT PLAYABLE. All seven have theirs: Negro and Blanco (`tools/bw1/IRBS.shifts`,
+  `IRAS.shifts`, both from White US), Negro 2 and Blanco 2 (`tools/bw2/IRES.shifts`,
+  `IRDS.shifts`), Platino (`tools/platinum/CPUS.shifts`), Plata SoulSilver
+  (`tools/soulsilver/soulsilver-es.json`) and Oro HeartGold (`tools/soulsilver/heartgold-es.json`):
+  99.2% to 99.9% of their functions found, the opening laid out on one screen as in the English
+  copies, Blanco's first battle in the wide battle view, the Black games' 8 MB and wider map
+  windows on, SoulSilver's first menu skipped. A translation of SoulSilver loads every overlay a little higher
   (its static data grew), so the tables without the game's code now take each overlay's load
   address from the ROM and compare its code there. The main program's first 2 KB (the secure
   area, encrypted in some dumps) are left out of the matching.
