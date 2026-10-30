@@ -20,6 +20,23 @@
   (its static data grew), so the tables without the game's code now take each overlay's load
   address from the ROM and compare its code there. The main program's first 2 KB (the secure
   area, encrypted in some dumps) are left out of the matching.
+- **New: iPhone and iPad.** A sideloaded app (`pokemon-ds-wide-ios.ipa`, iOS 14 or newer): the
+  same game list and games as on Android, with the ROMs, saves and settings in the Files app
+  (On My iPhone > Pokemon DS Widescreen).
+- **KEYS AND BUTTONS in the game list too:** its settings page (CONTROLS) changes the keys and
+  buttons before you play, as the pause menu does; on the Switch as well (any controller it
+  takes, sys-con and MissionControl ones included), and its list follows the buttons changed.
+- **Cheats: CHEATS in the pause menu.** Action Replay codes, run by melonDS's own engine, from a
+  `cheats` folder: the R4 / DeSmuME database (`usrcheat.dat`), a text file of your own codes named
+  after the game's code (`IPKE.txt` for HeartGold, ...) or a melonDS `.mch` file. Each turns on and
+  off as you play, and stays as you left it. Long lists scroll, and the chosen cheat's note from
+  the database (and its whole name, when the menu has to shorten it) shows under the menu.
+- **SoulSilver and HeartGold: the Running Shoes button beside the X menu.** The game greys it out
+  while its menu is open, and the single-screen view only shows the touch screen then; now the
+  button stands next to the menu, ON or OFF, and Y (or a touch on it) turns running on or off.
+- **SoulSilver and HeartGold: the title screen on both screens**, the logo beside the legendary
+  bird, as the other games show theirs; the opening movie shows its two screens one above the
+  other (the moon and the sea were on the hidden one).
 - **README: a trailer at the top**, every game on every platform.
 - **The pause menu and the settings page in groups:** the pause menu is RESUME, SAVE STATE, LOAD
   STATE, FAST FORWARD, then DISPLAY, GRAPHICS and CONTROLS (each a page of its own), RESET GAME and

@@ -39,7 +39,8 @@
 #undef STB_IMAGE_IMPLEMENTATION
 #include "launcher.h"
 #include "controls.h"
-#if !defined(__ANDROID__) && !defined(__SWITCH__)
+#include "ssr_os.h"
+#if !defined(SSR_PHONE) && !defined(__SWITCH__)
 #include "shortcuts.h"
 #endif
 
@@ -292,7 +293,13 @@ std::vector<Launcher::Game> FindGames(const Folders& fo, std::map<std::string, s
 
 void OpenFolder(const std::string& path)
 {
+#ifdef SSR_IOS
+    // (iOS: the Files app, opened at the folder; the app's folder shows there as On My iPhone >
+    // Pokemon DS Widescreen.)
+    std::string url = "shareddocuments://";
+#else
     std::string url = "file://";
+#endif
     if (path.empty() || path[0] != '/') url += "/"; // (C:/... on Windows)
     // (Escaped as a URL: a Mac opens none with a space in it, as in "Application Support".)
     static const char hex[] = "0123456789ABCDEF";
@@ -321,6 +328,12 @@ int PickGame(Folders& fo, std::vector<Launcher::Game>& games, int selected, bool
     bool needFolder = fo.roms.empty() || !JavaBool("canUseFiles");
     bool wasPicking = false;
     Uint32 lastFolderCheck = 0;
+#elif defined(SSR_IOS)
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+    SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "1"); // (taps come as clicks here; the game takes fingers one by one)
+    SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
+    SDL_SetHint(SDL_HINT_IOS_HIDE_HOME_INDICATOR, "2");
+    fullscreen = true;
 #endif
     #ifdef _WIN32
     // The program's own icon (resource 1, when it was built with one) for its windows.
@@ -375,9 +388,89 @@ int PickGame(Folders& fo, std::vector<Launcher::Game>& games, int selected, bool
         onBack = false;
         if (guide) page.Open(fo.cfg);
     };
+    // KEYS AND BUTTONS (the settings page's CONTROLS): each action's key or controller button,
+    // changed as in the pause menu (main.cpp): choose one, then press what it should be (ESC or 5
+    // seconds: as it was). Kept in the settings file's map_ lines (Controls::Bindings::SaveTo).
+    bool keysOpen = false, keysKeyboard = false;
+    int keysCapture = -1;
+    Uint32 keysUntil = 0;
+    Menu keysMenu;
+    const int keysFirst = 1, keysReset = keysFirst + Controls::COUNT, keysBack = keysReset + 1;
+    auto keysStyle = [&]() { return Controls::StyleOf(pads.empty() ? nullptr : pads[0]); };
+    auto keysBuild = [&]() {
+        keysMenu.items.clear();
+        keysMenu.items.push_back({ "CHANGING", keysKeyboard ? "KEYBOARD" : "CONTROLLER" });
+        for (int a = 0; a < Controls::COUNT; a++)
+            keysMenu.items.push_back({ Controls::ActionName(a),
+                keysCapture == a ? (keysKeyboard ? "PRESS A KEY" : "PRESS A BUTTON")
+                : keysKeyboard ? Controls::KeyName(ctl.Key(a)) : Controls::InputName(ctl.Pad(a, ctl.byLabel), keysStyle()) });
+        keysMenu.items.push_back({ "RESET ALL", "" });
+        keysMenu.items.push_back({ "BACK", "" });
+    };
+    auto keysSaved = [&]() {
+        ctl.SaveTo(fo.cfg);
+        page.Open(fo.cfg, true); // (the settings page's copy of the file, so it keeps these)
+        keysBuild();
+    };
+    auto keysActivate = [&](int row) {
+        if (row == 0) keysKeyboard = !keysKeyboard;
+        else if (row >= keysFirst && row < keysReset)
+        {
+            keysCapture = row - keysFirst;
+            keysUntil = SDL_GetTicks() + 5000;
+        }
+        else if (row == keysReset)
+        {
+            ctl.Reset();
+            keysSaved();
+        }
+        else if (row == keysBack) keysOpen = false;
+        keysBuild();
+    };
+    // What is pressed while KEYS AND BUTTONS is up: a key or button to give (in = Controls::IN_*,
+    // or -1 for a key), else moving through it. True if it was taken.
+    auto keysInput = [&](int sc, int in) {
+        if (!keysOpen) return false;
+        if (keysCapture >= 0)
+        {
+            if (sc == SDL_SCANCODE_ESCAPE || sc == SDL_SCANCODE_AC_BACK) keysCapture = -1;
+            else if (sc > 0 && keysKeyboard) { ctl.SetKey(keysCapture, sc); keysCapture = -1; keysSaved(); }
+            else if (in >= 0 && !keysKeyboard) { ctl.SetPad(keysCapture, in, ctl.byLabel); keysCapture = -1; keysSaved(); }
+            keysBuild();
+            return true;
+        }
+        MenuInput nav;
+        const int act = in >= 0 ? (ctl.PadCustom() ? ctl.ActionOfPad(in, ctl.byLabel)
+                                   : in == Controls::IN_A ? Controls::A : in == Controls::IN_B ? Controls::B
+                                   : in == Controls::IN_UP ? Controls::UP : in == Controls::IN_DOWN ? Controls::DOWN
+                                   : in == Controls::IN_LEFT ? Controls::LEFT : in == Controls::IN_RIGHT ? Controls::RIGHT : -1)
+                      : -1;
+        nav.up = sc == SDL_SCANCODE_UP || act == Controls::UP;
+        nav.down = sc == SDL_SCANCODE_DOWN || act == Controls::DOWN;
+        nav.left = sc == SDL_SCANCODE_LEFT || act == Controls::LEFT;
+        nav.right = sc == SDL_SCANCODE_RIGHT || act == Controls::RIGHT;
+        nav.accept = sc == SDL_SCANCODE_RETURN || sc == SDL_SCANCODE_KP_ENTER || act == Controls::A || act == Controls::START;
+        nav.back = sc == SDL_SCANCODE_ESCAPE || sc == SDL_SCANCODE_AC_BACK || act == Controls::B || act == Controls::SELECT;
+        if (nav.back) { keysOpen = false; return true; }
+        int dir = 0;
+        const int hit = keysMenu.Update(nav, dir);
+        if (hit >= 0) keysActivate(hit);
+        return true;
+    };
     auto change = [&](int d) {
         const char* key = page.Change(d);
-#if !defined(__ANDROID__) && !defined(__SWITCH__)
+        if (key && !strcmp(key, "!keys"))
+        {
+            ctl.Load(fo.cfg);
+            keysOpen = true;
+            keysCapture = -1;
+            keysKeyboard = pads.empty() && joys.empty();
+            keysMenu.selected = keysFirst;
+            keysMenu.open = true;
+            keysBuild();
+            return;
+        }
+#if !defined(SSR_PHONE) && !defined(__SWITCH__)
         // DESKTOP SHORTCUTS: made at once; what came of it shown as the option's value.
         if (key && !strcmp(key, "!shortcuts"))
         {
@@ -475,6 +568,43 @@ int PickGame(Folders& fo, std::vector<Launcher::Game>& games, int selected, bool
         bool any = SDL_WaitEventTimeout(&e, 50);
         while (any)
         {
+            // (KEYS AND BUTTONS takes the keys and buttons while it is up.)
+            if (keysOpen && e.type != SDL_QUIT)
+            {
+                if (e.type == SDL_KEYDOWN && !e.key.repeat) keysInput(e.key.keysym.scancode, -1);
+                else if (e.type == SDL_CONTROLLERBUTTONDOWN) keysInput(0, e.cbutton.button);
+                else if (e.type == SDL_CONTROLLERAXISMOTION)
+                {
+                    const int t = e.caxis.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT ? 0 : e.caxis.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT ? 1 : -1;
+                    if (t >= 0)
+                    {
+                        const float v = e.caxis.value / 32767.0f;
+                        if (v > 0.5f && trig[t] <= 0.5f) keysInput(0, t ? Controls::IN_RT : Controls::IN_LT);
+                        trig[t] = v;
+                    }
+                }
+                else if (e.type == SDL_JOYBUTTONDOWN)
+                {
+                    bool generic = false;
+                    for (SDL_Joystick* j : joys) generic |= SDL_JoystickInstanceID(j) == e.jbutton.which;
+                    if (generic) keysInput(0, Controls::JoyButtonInput(e.jbutton.button));
+                }
+                else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT && keysCapture < 0)
+                {
+                    // (A click or tap on a row: chosen and used.)
+                    int ww = 1, wh = 1;
+                    SDL_GetWindowSize(window, &ww, &wh);
+                    const int row = keysMenu.ItemAt(e.button.x * canvas.w / std::max(1, ww), e.button.y * canvas.h / std::max(1, wh));
+                    if (row >= 0) { keysMenu.selected = row; keysActivate(row); }
+                    else if (row == -2) keysOpen = false;
+                }
+                else if (e.type == SDL_CONTROLLERDEVICEADDED || e.type == SDL_CONTROLLERDEVICEREMOVED || e.type == SDL_JOYDEVICEADDED ||
+                         e.type == SDL_JOYDEVICEREMOVED || e.type == SDL_WINDOWEVENT)
+                    goto normal; // (controllers coming and going are still followed)
+                any = SDL_PollEvent(&e);
+                continue;
+            }
+        normal:
             switch (e.type)
             {
             case SDL_QUIT:
@@ -609,6 +739,8 @@ int PickGame(Folders& fo, std::vector<Launcher::Game>& games, int selected, bool
                     else if (!guide && mx > canvas.w * 3 / 4) toggleGuide();
 #ifdef __ANDROID__
                     else if (!guide && mx < canvas.w / 4) JavaVoid("chooseFolder");
+#elif defined(SSR_IOS)
+                    else if (!guide && mx < canvas.w / 4) OpenFolder(fo.roms);
 #endif
                     break;
                 }
@@ -722,7 +854,13 @@ int PickGame(Folders& fo, std::vector<Launcher::Game>& games, int selected, bool
         }
         held = dir && dir == heldDir ? held + 1 : dir ? 1 : 0;
         heldDir = dir;
-        if (held == 1 || (held > 8 && held % 3 == 0)) move(dir);
+        if ((held == 1 || (held > 8 && held % 3 == 0)) && !keysOpen) move(dir);
+        // (KEYS AND BUTTONS: the capture's 5 seconds.)
+        if (keysOpen && keysCapture >= 0 && SDL_GetTicks() > keysUntil)
+        {
+            keysCapture = -1;
+            keysBuild();
+        }
 
 #ifdef __ANDROID__
         // Back from Android's folder picker (or its "All files access" page): the folder it
@@ -769,7 +907,13 @@ int PickGame(Folders& fo, std::vector<Launcher::Game>& games, int selected, bool
             return std::string(Controls::InputName(ctl.PadCustom() ? ctl.Pad(a, ctl.byLabel) : def,
                 Controls::StyleOf(pads.empty() ? nullptr : pads[0])));
         };
-#ifdef __ANDROID__
+#ifdef SSR_IOS
+        const std::string hint = games.empty() ? std::string("FOLDER: YOUR ROMS FOLDER IN THE FILES APP")
+                               : padIn ? "TAP A GAME TWICE OR PRESS " + btn(Controls::A) + " TO PLAY    " + btn(Controls::Y) + ": SETTINGS"
+                                       : std::string("TAP A GAME TWICE TO PLAY    SETTINGS: AT THE TOP");
+        const std::string pageHint = padIn ? "UP / DOWN: CHOOSE    " + btn(Controls::A) + ": CHANGE    " + btn(Controls::B) + ": BACK"
+                                           : std::string("TAP AN OPTION THEN TAP AGAIN TO CHANGE    DRAG TO SCROLL");
+#elif defined(__ANDROID__)
         const std::string hint = games.empty() ? "TAP OR PRESS " + (padIn ? btn(Controls::A) : std::string("A")) + " TO CHOOSE YOUR ROMS FOLDER    BACK: QUIT"
                                : padIn ? "TAP A GAME TWICE OR PRESS " + btn(Controls::A) + " TO PLAY    " + btn(Controls::Y) + ": SETTINGS    BACK: QUIT"
                                        : std::string("TAP A GAME TWICE TO PLAY    SETTINGS: AT THE TOP    BACK: QUIT");
@@ -785,7 +929,17 @@ int PickGame(Folders& fo, std::vector<Launcher::Game>& games, int selected, bool
                                            : std::string("UP / DOWN: CHOOSE    LEFT / RIGHT / ENTER: CHANGE    ESC: BACK");
 #endif
         static const Launcher::Theme theme;
-        if (guide) page.Draw(canvas, pageHint, theme);
+        if (guide)
+        {
+            page.Draw(canvas, pageHint, theme);
+            if (keysOpen)
+            {
+                std::string kh = keysCapture >= 0 ? (keysKeyboard ? "ESC: LEAVE IT AS IT WAS" : "OR WAIT 5 SECONDS: AS IT WAS")
+                               : padIn ? btn(Controls::A) + ": CHANGE   " + btn(Controls::B) + ": BACK" : std::string("ENTER: CHANGE   ESC: BACK");
+                if (keysCapture < 0 && keysMenu.selected == 0) kh = "CHANGE: KEYBOARD OR CONTROLLER";
+                keysMenu.Draw(canvas, "KEYS AND BUTTONS", kh);
+            }
+        }
         else cols = Launcher::Draw(canvas, games, onSettings ? -1 : selected, first, note, hint, theme);
         {
             // The title band's buttons (for touch screens and the mouse): SETTINGS, or BACK in
@@ -800,7 +954,7 @@ int PickGame(Folders& fo, std::vector<Launcher::Game>& games, int selected, bool
             else
             {
                 button(canvas.w - 8 * s - Canvas::TextWidth("SETTINGS", s), "SETTINGS", onSettings);
-#ifdef __ANDROID__
+#ifdef SSR_PHONE
                 canvas.Text(8 * s, 7 * s, "FOLDER", s, theme.hint);
 #endif
             }
@@ -814,6 +968,14 @@ int PickGame(Folders& fo, std::vector<Launcher::Game>& games, int selected, bool
                                     asking ? "TAP ANYWHERE: ALLOW ACCESS TO FILES, THEN PICK THE FOLDER" : "NO .NDS FILES IN",
                                     asking ? "WITH YOUR .NDS FILES. SAVES GO IN A SAVES FOLDER INSIDE IT." : fo.roms.c_str(),
                                     "",
+                                    "IT PLAYS POKEMON BLACK / WHITE / BLACK 2 / WHITE 2 (ENGLISH)",
+                                    "SOULSILVER / HEARTGOLD / PLATINUM (US)" };
+            const char* heading = lines[0];
+#elif defined(SSR_IOS)
+            const char* lines[] = { "NO GAMES FOUND", "",
+                                    "PUT YOUR .NDS FILES IN THE FILES APP: ON MY IPHONE (OR IPAD)",
+                                    "> POKEMON DS WIDESCREEN > ROMS. TAP FOLDER AT THE TOP TO GO THERE.",
+                                    "THEY SHOW UP HERE BY THEMSELVES.", "",
                                     "IT PLAYS POKEMON BLACK / WHITE / BLACK 2 / WHITE 2 (ENGLISH)",
                                     "SOULSILVER / HEARTGOLD / PLATINUM (US)" };
             const char* heading = lines[0];
@@ -843,9 +1005,9 @@ int PickGame(Folders& fo, std::vector<Launcher::Game>& games, int selected, bool
     if (texture) SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-#ifndef __ANDROID__
-    // (Not on Android: SDL stays up for the game, which opens its own window in the same
-    // activity.)
+#ifndef SSR_PHONE
+    // (Not on a phone: SDL stays up for the game, which opens its own window in the same
+    // activity (Android) or app (iOS).)
     SDL_Quit();
 #endif
     return result;
@@ -884,7 +1046,16 @@ bool Start(int& argc, char**& argv)
 #else
     fo.dir = ProgramDir();
     fo.funcs = fo.dir + "/data/funcs";
-#if defined(__APPLE__)
+#if defined(SSR_IOS)
+    // iOS: the function tables in the app (read-only); the ROMs, saves, settings and game.log in
+    // its Documents folder, which the Files app shows as On My iPhone > Pokemon DS Widescreen
+    // (Info.plist: UIFileSharingEnabled), so ROMs can be put there and logs taken out.
+    {
+        const char* home = getenv("HOME");
+        fo.dir = std::string(home ? home : ".") + "/Documents";
+        MakeDir(fo.dir);
+    }
+#elif defined(__APPLE__)
     // The Mac app: the program's folder is inside the app (Contents/Resources, with the function
     // tables), which macOS may keep read-only, so the ROMs, saves and settings are in the user's
     // Application Support folder (O in the list opens its roms folder in the Finder).
@@ -971,7 +1142,11 @@ bool Start(int& argc, char**& argv)
     fprintf(stderr, "[launcher] %s (game code %s), save %s/%s\n", game.rom.c_str(), game.code.c_str(), fo.saves.c_str(),
         game.saveName.c_str());
     g_args = { argc > 0 && argv[0] ? argv[0] : "pokemon-ds-wide", game.rom, "--save", fo.saves + "/" + game.saveName,
-               "--config", fo.cfg, "--jit" };
+               "--config", fo.cfg };
+#ifndef SSR_IOS
+    // (melonDS's JIT; iOS lets no app make code as it runs, so there the interpreter plays.)
+    g_args.push_back("--jit");
+#endif
     // SoulSilver and HeartGold take their layouts from the program's own tables and must not be
     // given a function table (one switches to the Black games' layouts); the others take theirs.
     if (!Launcher::IsHeartSilver(game.code))

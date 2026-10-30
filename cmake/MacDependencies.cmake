@@ -17,6 +17,11 @@ FetchContent_Declare(ssr_sdl2
     URL_HASH SHA256=5f5993c530f084535c65a6879e9b26ad441169b3e25d789d83287040a9ca5165)
 FetchContent_MakeAvailable(ssr_sdl2)
 
+# (iOS, tools/ios/build_all.sh: SDL2 only. libpng is for the test harness's screenshots.)
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    return()
+endif()
+
 # zlib is supplied by macOS; use the SDK copy, never a newer Homebrew dylib.
 set(SSR_MACOS_SDK "${CMAKE_OSX_SYSROOT}")
 if(NOT IS_DIRECTORY "${SSR_MACOS_SDK}")

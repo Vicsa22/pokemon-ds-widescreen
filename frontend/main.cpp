@@ -16,6 +16,7 @@
 #include <chrono>
 #include <thread>
 #include "sampler.h"
+#include "ssr_os.h"
 #include <vector>
 #include <tuple>
 #include <deque>
@@ -238,6 +239,7 @@ struct PadState
 
 #include "touchpad.h"
 #include "controls.h"
+#include "cheats.h"
 
 static int PadButtonFromName(const std::string& n)
 {
@@ -1124,9 +1126,9 @@ struct Pads
             fprintf(stderr, "controller: %s\n", name ? name : "?");
             return name ? name : "";
         }
-#ifdef __ANDROID__
-        // Android reports some of a device's own keys as a joystick, and using one hides the
-        // on-screen controls.
+#ifdef SSR_PHONE
+        // Android reports some of a device's own keys as a joystick (and iOS its motion sensor),
+        // and using one hides the on-screen controls.
         return nullptr;
 #endif
         SDL_Joystick* j = SDL_JoystickOpen(index);
@@ -1579,6 +1581,17 @@ int main(int argc, char** argv)
     fprintf(stderr, "ROM %s: %zu bytes; save %s: %zu bytes\n", opt.rom.c_str(), rom.size(), opt.save.c_str(), sav.size());
     auto nds = MakeConsole(rom, sav, opt.headless);
     if (!nds) return 1;
+    // Cheats (cheats.h): from the cheats folder beside the saves, the ones that are on running
+    // from the start. (Not in a lockstep test, which compares two runs of the game as it is.)
+    Cheats::List cheats;
+    const std::string gameCode = rom.size() >= 0x200 ? std::string((const char*)&rom[0x0C], 4) : std::string();
+    if (!opt.lockstep && rom.size() >= 0x200)
+    {
+        cheats.Load(Cheats::FolderFor(opt.save), gameCode, rom.data());
+        cheats.Apply(nds->AREngine);
+        fprintf(stderr, "[cheats] %zu for %s in %s, %d on\n", cheats.items.size(), gameCode.c_str(), cheats.folder.c_str(), cheats.On());
+        for (const std::string& src : cheats.sources) fprintf(stderr, "[cheats]   from %s\n", src.c_str());
+    }
 #ifdef __SWITCH__
     if (UseJit) fprintf(stderr, "[switch] fast memory: %s\n", UseFastMem ? "on" : "off");
 #endif
@@ -1852,7 +1865,7 @@ int main(int argc, char** argv)
 
     if (!opt.headless)
     {
-#ifdef __ANDROID__
+#ifdef SSR_PHONE
         SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
         SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, "1");
         // Fingers are handled one by one (on-screen controls and the touch screen).
@@ -1863,6 +1876,11 @@ int main(int argc, char** argv)
         // HIDAPI drivers on, a pad one of them claims (a Backbone One, a PlayStation pad) is
         // left out of Android's list, and is lost if SDL cannot open it over USB itself.
         SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI, "0");
+#endif
+#ifdef SSR_IOS
+        // The home bar at the bottom fades away, and a swipe up from the bottom edge (where the
+        // DS's SELECT and START are) needs a second swipe to leave the game.
+        SDL_SetHint(SDL_HINT_IOS_HIDE_HOME_INDICATOR, "2");
 #endif
 #ifdef __SWITCH__
         // The touch screen is read from its finger events (see switchFinger), not as a mouse.
@@ -2047,6 +2065,18 @@ int main(int argc, char** argv)
     // puts along the bottom of the top screen gives that away; while this counts down, the
     // menu layout is used although the task's probe is still silent.
     int menuReturn = 0;
+    // SoulSilver and HeartGold: the Running Shoes button. The game has it on the touch screen
+    // beside its menu (x 182-255, y 89-130), but greys it out while the X menu is open, and the
+    // single-screen view shows the touch screen only then. So its picture is kept from the last
+    // frame it was seen (shoesPix, shoesOn: running on) and drawn next to the X menu, where Y or
+    // a touch on it toggles it: the menu is closed (B), the button touched, and the menu opened
+    // again (X), one step after another (shoesStep, from shoesStepAt).
+    static const int SHOES_X = 182, SHOES_Y = 89, SHOES_W = 74, SHOES_H = 42;
+    std::vector<uint32_t> shoesPix(SHOES_W * SHOES_H);
+    bool shoesSeen = false, shoesOn = false;
+    int shoesStep = 0;
+    uint32_t shoesStepAt = 0;
+    float shoesRect[4] = {}; // where it was last drawn, in the view's units (x, y, w, h); w 0: not shown
     // Frames in a row in which the battle's touch screen showed something that is neither
     // of the menus with a layout of their own nor the idle backdrop.
     int battleUnknown = 0;
@@ -3115,6 +3145,17 @@ int main(int argc, char** argv)
             sc.bgX = 2;
             sc.bgY = 96;
         }
+        else if (appActive("TitleScreen") && !AutoFocus::Blank(screens[0].pixels) && !AutoFocus::Blank(screens[1].pixels))
+            // The title screen (the logo above, Ho-Oh or Lugia flying below): the two side by
+            // side, as the other games show theirs, instead of the logo alone. (Not the opening
+            // movie: its two screens are one tall picture, the sky above the sea.)
+            sc = Stack("title", { Crop(0, 0, 0, 256, 192), Crop(1, 0, 0, 256, 192) }, true, viewWidth);
+        else if (appActive("IntroMovie") && !AutoFocus::Blank(screens[1].pixels))
+            // The opening movie: its two screens are one tall picture (the night sky above, the
+            // sea with the moon and the legendary bird below, where most of it happens), shown
+            // as on a DS, one above the other; the bottom one alone while the top is one colour.
+            sc = AutoFocus::Blank(screens[0].pixels) ? Stack("movie", { Crop(1, 0, 0, 256, 192) }, false, viewWidth)
+                                                      : Stack("movie", { Crop(0, 0, 0, 256, 192), Crop(1, 0, 0, 256, 192) }, false, viewWidth);
         else if (appActive("PokemonSummary") && AutoFocus::Blank(screens[0].pixels))
             // Fading in or out: black, not the card's empty frames on black.
             only("summary", 0);
@@ -3829,9 +3870,10 @@ int main(int argc, char** argv)
         M_RESUME, M_LAYOUT, M_LARGE, M_FPS60, M_FULLSCREEN, M_SMOOTH, M_WIDE, M_WIDEMAP, M_BATTLEBUTTONS,
         M_WIDELINES, M_AUTODETAIL, M_WIDEGPU, M_GPU3D, M_SHOWFPS, M_BUTTONS, M_PADTOUCH, M_EMULATION,
         M_CONTROLS, M_STARTBTN, M_FAST, M_FFLOWRES, M_SAVESTATE, M_LOADSTATE, M_RESET, M_QUIT,
-        M_DISPLAY, M_GRAPHICS, M_CONTROLMENU, M_BACK
+        M_DISPLAY, M_GRAPHICS, M_CONTROLMENU, M_BACK, M_CHEATS, M_NOTHING,
+        M_CHEAT0 = 1000 // (M_CHEAT0 + i: cheat i, CHEATS)
     };
-    enum { PAGE_MAIN, PAGE_KEYS, PAGE_DISPLAY, PAGE_GRAPHICS, PAGE_CONTROLS };
+    enum { PAGE_MAIN, PAGE_KEYS, PAGE_DISPLAY, PAGE_GRAPHICS, PAGE_CONTROLS, PAGE_CHEATS };
     std::vector<int> menuIds;
     bool fastLock = false;
     double ffFrameMs = 0; // emulation time of one frame while fast forwarding (see speed)
@@ -3899,6 +3941,7 @@ int main(int argc, char** argv)
             add(M_DISPLAY, "DISPLAY", "");
             add(M_GRAPHICS, "GRAPHICS", "");
             add(M_CONTROLMENU, "CONTROLS", "");
+            add(M_CHEATS, "CHEATS", cheats.On() ? std::to_string(cheats.On()) + " ON" : "");
             add(M_RESET, "RESET GAME", "");
             add(M_QUIT, "QUIT", "");
         }
@@ -3908,7 +3951,7 @@ int main(int argc, char** argv)
             // (The Switch always shows the one wide screen these layouts are built around.)
             add(M_LAYOUT, "SCREEN LAYOUT", LayoutName(layout.mode));
             add(M_LARGE, "LARGE SCREEN", large[focus.mode]);
-#if !defined(__ANDROID__)
+#if !defined(SSR_PHONE)
             // (Always full screen on the Switch and phones. Borderless: a window the size of the
             // screen, so other windows come up at once.)
             add(M_FULLSCREEN, "BORDERLESS FULLSCREEN", onOff(cfg.fullscreen));
@@ -3955,7 +3998,7 @@ int main(int argc, char** argv)
             // widescreen picture back, far more than drawing it in software.)
             add(M_GPU3D, "3D ON GPU", UseGpu3D ? "ON" : cfg.gpu3d ? "ON (NOT AVAILABLE)" : "OFF");
 #endif
-#if !defined(__SWITCH__) && !defined(__ANDROID__)
+#if !defined(__SWITCH__) && !defined(SSR_PHONE)
             // ON: 360 lines while fast forwarding, for more frames a second (the menu's hint says so).
             add(M_FFLOWRES, "FAST FORWARD LOW RES", onOff(cfg.ffLowRes));
 #endif
@@ -3967,6 +4010,13 @@ int main(int argc, char** argv)
 #endif
             add(M_BACK, "BACK", "");
         }
+        else if (menuPage == PAGE_CHEATS)
+        {
+            if (cheats.items.empty()) add(M_NOTHING, "NONE FOUND FOR THIS GAME", "");
+            for (size_t i = 0; i < cheats.items.size(); i++)
+                add(M_CHEAT0 + (int)i, cheats.items[i].name.c_str(), cheats.items[i].on ? "ON" : "OFF");
+            add(M_BACK, "BACK", "");
+        }
         else if (menuPage == PAGE_CONTROLS)
         {
             add(M_CONTROLS, "KEYS AND BUTTONS", "");
@@ -3975,7 +4025,7 @@ int main(int argc, char** argv)
             // (Nothing to choose on the Switch: its labels are the DS's positions.)
             add(M_BUTTONS, "BUTTONS", cfg.byLabel ? "BY LABEL" : "BY POSITION");
 #endif
-#if !defined(__SWITCH__) && !defined(__ANDROID__)
+#if !defined(__SWITCH__) && !defined(SSR_PHONE)
             add(M_PADTOUCH, "STICK TOUCH CURSOR", onOff(cfg.padTouch)); // (the Switch and phones have touch screens)
 #endif
             add(M_BACK, "BACK", "");
@@ -4017,7 +4067,7 @@ int main(int argc, char** argv)
     // On-screen controls (touch screens): shown while no controller is connected.
     TouchPad touchPad;
     bool touchPadUsed = false, touchMenuHeld = false, prevTouchMenu = false;
-#ifdef __ANDROID__
+#ifdef SSR_PHONE
     touchPadUsed = true;
 #endif
 #ifdef __SWITCH__
@@ -5031,7 +5081,8 @@ int main(int argc, char** argv)
             int backTo = -1;
             if (nav.back && menuPage != PAGE_MAIN)
             {
-                backTo = menuPage == PAGE_DISPLAY ? M_DISPLAY : menuPage == PAGE_GRAPHICS ? M_GRAPHICS : M_CONTROLMENU;
+                backTo = menuPage == PAGE_DISPLAY ? M_DISPLAY : menuPage == PAGE_GRAPHICS ? M_GRAPHICS
+                       : menuPage == PAGE_CHEATS ? M_CHEATS : M_CONTROLMENU;
                 nav = MenuInput();
             }
             else if (nav.back)
@@ -5043,8 +5094,19 @@ int main(int argc, char** argv)
             int hit = menu.Update(nav, dir);
             const int id = backTo >= 0 ? M_BACK : hit >= 0 && hit < (int)menuIds.size() ? menuIds[hit] : -1;
             if (backTo >= 0) hit = 0;
+            // A cheat: on or off at once, for the game as it runs (cheats.h).
+            if (id >= M_CHEAT0)
+            {
+                cheats.Toggle((size_t)(id - M_CHEAT0));
+                cheats.Apply(nds->AREngine);
+                fprintf(stderr, "[cheats] %s %s\n", cheats.items[id - M_CHEAT0].key.c_str(), cheats.items[id - M_CHEAT0].on ? "on" : "off");
+            }
             switch (id)
             {
+            case M_CHEATS:
+                goPage(PAGE_CHEATS, -1);
+                hit = -1;
+                break;
             case M_DISPLAY:
                 goPage(PAGE_DISPLAY, -1);
                 hit = -1;
@@ -5058,7 +5120,9 @@ int main(int argc, char** argv)
                 hit = -1;
                 break;
             case M_BACK:
-                if (backTo < 0) backTo = menuPage == PAGE_DISPLAY ? M_DISPLAY : menuPage == PAGE_GRAPHICS ? M_GRAPHICS : M_CONTROLMENU;
+                if (backTo < 0)
+                    backTo = menuPage == PAGE_DISPLAY ? M_DISPLAY : menuPage == PAGE_GRAPHICS ? M_GRAPHICS
+                           : menuPage == PAGE_CHEATS ? M_CHEATS : M_CONTROLMENU;
                 goPage(PAGE_MAIN, backTo);
                 hit = -1;
                 break;
@@ -5085,7 +5149,7 @@ int main(int argc, char** argv)
                 cfg.fps60 = !cfg.fps60;
                 nds->GPU.GPU3D.InterpolationEnabled = cfg.fps60;
                 break;
-#if !defined(__SWITCH__) && !defined(__ANDROID__)
+#if !defined(__SWITCH__) && !defined(SSR_PHONE)
             case M_FULLSCREEN:
                 cfg.fullscreen = !cfg.fullscreen;
                 if (window)
@@ -5146,7 +5210,7 @@ int main(int argc, char** argv)
                 cfg.byLabel = !cfg.byLabel;
                 break;
 #endif
-#if !defined(__SWITCH__) && !defined(__ANDROID__)
+#if !defined(__SWITCH__) && !defined(SSR_PHONE)
             case M_PADTOUCH:
                 cfg.padTouch = !cfg.padTouch;
                 break;
@@ -5175,7 +5239,7 @@ int main(int argc, char** argv)
             case M_FAST:
                 fastLock = !fastLock;
                 break;
-#if !defined(__SWITCH__) && !defined(__ANDROID__)
+#if !defined(__SWITCH__) && !defined(SSR_PHONE)
             case M_FFLOWRES:
                 cfg.ffLowRes = !cfg.ffLowRes;
                 break;
@@ -5491,7 +5555,13 @@ int main(int argc, char** argv)
                 if (merged)
                 {
                     float bx = (mouseX - view.originX) / view.unit, by = (mouseY - view.originY) / view.unit;
-                    if (touchAt(bx, by, touchX, touchY)) touching = true;
+                    // (The Running Shoes button drawn beside SoulSilver's X menu: see shoesStep.)
+                    if (shoesRect[2] > 0 && bx >= shoesRect[0] && bx < shoesRect[0] + shoesRect[2] && by >= shoesRect[1] &&
+                        by < shoesRect[1] + shoesRect[3])
+                    {
+                        if (!wasMouseDown && shoesStep == 0) { shoesStep = 1; shoesStepAt = frame; }
+                    }
+                    else if (touchAt(bx, by, touchX, touchY)) touching = true;
                     // (Each press in game.log: where it was and what it touched, for reports of
                     // touches that did nothing.)
                     if (!wasMouseDown)
@@ -5617,6 +5687,72 @@ int main(int argc, char** argv)
                 touchX = stripTouchX;
                 touchY = stripTouchY;
                 stripTouch--;
+            }
+        }
+
+        // SoulSilver and HeartGold's Running Shoes button (see shoesPix): its picture kept while the
+        // game shows it, Y beside the X menu toggling it, and the steps that do it.
+        if (probeStartMenu >= 0 && !paused)
+        {
+            const u32* tb = nds->GPU.Framebuffer[nds->GPU.FrontBuffer][1].get();
+            auto nearC = [&](int x, int y, uint32_t c) {
+                const u32 p = tb[y * 256 + x];
+                return std::abs((int)((p >> 16) & 255) - (int)(c >> 16)) < 14 && std::abs((int)((p >> 8) & 255) - (int)((c >> 8) & 255)) < 14 &&
+                    std::abs((int)(p & 255) - (int)(c & 255)) < 14;
+            };
+            const bool menuOpenNow = probeActive(probeStartMenu);
+            if (getenv("SSR_SHOES_DEBUG") && frame % 50 == 0)
+                fprintf(stderr, "[shoes] frame %u: field %d menu %d px %06x %06x %06x scene %s\n", frame, fieldActive(), menuOpenNow,
+                    tb ? tb[100 * 256 + 183] & 0xFFFFFF : 0, tb ? tb[100 * 256 + 186] & 0xFFFFFF : 0, tb ? tb[93 * 256 + 230] & 0xFFFFFF : 0, scene.name);
+            // (Its dark outline, its orange rim and the orange top of its face: on or off.)
+            if (tb && fieldActive() && !menuOpenNow && nearC(186, 100, 0xBA6910) && nearC(186, 120, 0xBA6910) && nearC(230, 93, 0xEBAA59))
+            {
+                for (int y = 0; y < SHOES_H; y++)
+                    for (int x = 0; x < SHOES_W; x++) shoesPix[y * SHOES_W + x] = tb[(SHOES_Y + y) * 256 + SHOES_X + x] | 0xFF000000u;
+                if (!shoesSeen) fprintf(stderr, "[shoes] frame %u: the Running Shoes button seen\n", frame);
+                shoesSeen = true;
+                shoesOn = nearC(200, 120, 0xBA6910); // (off: the shoes grey on the orange)
+            }
+            static uint32_t prevShoesKeys = 0;
+            const uint32_t edge = keys & ~prevShoesKeys;
+            prevShoesKeys = keys;
+            if (shoesRect[2] > 0 && !strcmp(scene.name, "start-menu"))
+            {
+                if ((edge & (1u << KEY_Y)) && shoesStep == 0)
+                {
+                    shoesStep = 1;
+                    shoesStepAt = frame;
+                }
+                keys &= ~(1u << KEY_Y); // (the game's own Y, the registered item, does nothing in the menu)
+            }
+            // 1: B closes the menu; 2: once the overworld is back without it, wait a moment;
+            // 3: the button touched; 4: X opens the menu again. (Given up after 2 seconds.)
+            const uint32_t since = frame - shoesStepAt;
+            if (shoesStep == 1)
+            {
+                keys |= 1u << KEY_B;
+                if (since >= 3) { shoesStep = 2; shoesStepAt = frame; }
+            }
+            else if (shoesStep == 2)
+            {
+                if (!menuOpenNow && fieldActive() && since >= 8) { shoesStep = 3; shoesStepAt = frame; }
+                else if (since > 120) shoesStep = 0;
+            }
+            else if (shoesStep == 3)
+            {
+                touching = true;
+                touchX = SHOES_X + SHOES_W / 2;
+                touchY = SHOES_Y + SHOES_H / 2;
+                if (since >= 4) { shoesStep = 4; shoesStepAt = frame; }
+            }
+            else if (shoesStep == 4)
+            {
+                if (since >= 10) keys |= 1u << KEY_X;
+                if (since >= 13)
+                {
+                    shoesStep = 0;
+                    fprintf(stderr, "[shoes] frame %u: running shoes %s\n", frame, shoesOn ? "on" : "off");
+                }
             }
         }
 
@@ -6306,6 +6442,36 @@ int main(int argc, char** argv)
             }
         }
 #endif
+        // SoulSilver and HeartGold: the Running Shoes button beside the X menu (see shoesPix),
+        // left of the menu's panel at its foot, its button named under it.
+        shoesRect[2] = 0;
+        if (merged && shoesSeen && !paused && !strcmp(scene.name, "start-menu") && scene.items.size() >= 2)
+        {
+            const Element& panel = scene.items.back();
+            const float sc = panel.scale;
+            const float w = SHOES_W * sc, h = SHOES_H * sc;
+            const float x = panel.dx - w - 6, y = panel.dy + 192 * sc - h - 14;
+            shoesRect[0] = x; shoesRect[1] = y; shoesRect[2] = w; shoesRect[3] = h;
+            const int ox = (int)(view.originX + x * view.unit), oy = (int)(view.originY + y * view.unit);
+            const int ow = (int)(w * view.unit), oh = (int)(h * view.unit);
+            for (int py = 0; py < oh; py++)
+            {
+                const int sy = std::min(SHOES_H - 1, py * SHOES_H / std::max(1, oh));
+                for (int px = 0; px < ow; px++)
+                {
+                    const int sx = std::min(SHOES_W - 1, px * SHOES_W / std::max(1, ow));
+                    canvas.Fill(ox + px, oy + py, 1, 1, shoesPix[sy * SHOES_W + sx]);
+                }
+            }
+            const int tsc = std::max(1, outH / 360);
+            const std::string label = std::string(pads.Empty() ? Controls::KeyName(cfg.controls.Key(Controls::Y))
+                : Controls::InputName(cfg.controls.Pad(Controls::Y, cfg.byLabel), Controls::StyleOf(pads.controllers.empty() ? nullptr : pads.controllers[0])))
+                + ": RUN " + (shoesOn ? "ON" : "OFF");
+            const int tw = Canvas::TextWidth(label, tsc);
+            canvas.Fill(ox + (ow - tw) / 2 - 3 * tsc, oy + oh + 2 * tsc, tw + 6 * tsc, 11 * tsc, 0xC0000000);
+            canvas.Text(ox + (ow - tw) / 2, oy + oh + 4 * tsc, label, tsc, 0xFFFFFFFF);
+            overlayUsed = true;
+        }
         if (frame < toastUntil)
         {
             int sc = outH / 240 < 1 ? 1 : outH / 240;
@@ -6331,7 +6497,7 @@ int main(int argc, char** argv)
             std::string hint = touchPadUsed && touchPad.visible ? "TAP: CHOOSE   OUTSIDE: BACK"
                                : btn(Controls::A) + ": SELECT   " + btn(Controls::B) + ": BACK";
             const int selId = menu.selected >= 0 && menu.selected < (int)menuIds.size() ? menuIds[menu.selected] : -1;
-            static const char* pageTitle[] = { "", "KEYS AND BUTTONS", "DISPLAY", "GRAPHICS", "CONTROLS" };
+            static const char* pageTitle[] = { "", "KEYS AND BUTTONS", "DISPLAY", "GRAPHICS", "CONTROLS", "CHEATS" };
             if (menuPage == PAGE_KEYS)
             {
                 if (!(touchPadUsed && touchPad.visible)) hint = btn(Controls::A) + ": CHANGE   " + btn(Controls::B) + ": BACK";
@@ -6346,14 +6512,18 @@ int main(int argc, char** argv)
             }
             else
             {
-#if !defined(__SWITCH__) && !defined(__ANDROID__)
+#if !defined(__SWITCH__) && !defined(SSR_PHONE)
             // (What FAST FORWARD LOW RES is for, while it is the one chosen.)
             if (selId == M_FFLOWRES) hint = "ON: MORE FPS IN FAST FORWARD";
 #endif
             // (What START BUTTON does, while it is the one chosen.)
             if (selId == M_STARTBTN) hint = cfg.startMenu ? "START OPENS THIS MENU" : "START IS THE DS START";
             if (selId == M_CONTROLS) hint = "GIVE ANY BUTTON ANOTHER KEY OR BUTTON";
-            menu.Draw(canvas, pageTitle[menuPage], hint);
+            if (selId == M_CHEATS) hint = cheats.items.empty() ? "NONE FOUND: SEE THE README" : "ACTION REPLAY CODES";
+            if (selId == M_NOTHING) hint = "GET USRCHEAT.DAT: SEE THE README";
+            if (selId >= M_CHEAT0 && !(touchPadUsed && touchPad.visible)) hint = btn(Controls::A) + ": ON / OFF   " + btn(Controls::B) + ": BACK";
+            const std::string note = selId >= M_CHEAT0 && selId - M_CHEAT0 < (int)cheats.items.size() ? cheats.items[selId - M_CHEAT0].note : std::string();
+            menu.Draw(canvas, pageTitle[menuPage], hint, note);
             }
             overlayUsed = true;
         }
