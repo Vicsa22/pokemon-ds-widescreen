@@ -259,6 +259,10 @@ class Module:
         """The address the other copy has the function at, or None."""
         if not self.ok:
             return None
+        # The main program's first 2 KB (the secure area) are encrypted in some dumps and in
+        # the clear in others: their few stubs are not compared, and keep the running shift.
+        if self.name == 'main' and addr - self.src_base < 0x800:
+            return None
         o, places = locate(self.src, addr - self.src_base, size, thumb, self.dst, addr + self.shift - self.dst_base)
         if o is None:
             self.missed += 1

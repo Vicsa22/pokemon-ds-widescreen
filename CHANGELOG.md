@@ -10,14 +10,16 @@
   games and Platinum) or `tools/soulsilver/match_heartgold.py` (SoulSilver and HeartGold) once,
   and the shift files it writes (addresses only) go in the repository; the builds make the
   tables from them (`tools/region_tables.py`). A download without a copy's tables shows that
-  copy as NOT PLAYABLE. Blanco (`tools/bw1/IRAS.shifts`), Blanco 2 (`tools/bw2/IRDS.shifts`) and
-  Platino (`tools/platinum/CPUS.shifts`) have theirs: 99.8% of their functions found, the opening
-  laid out on one screen as in the English copies, Blanco's first battle in the wide battle view,
-  Blanco 2's 8 MB and wider map windows on. Oro HeartGold has its file too
-  (`tools/soulsilver/heartgold-es.json`, 99.6% found), made through HeartGold (US) and its own
-  shifts rather than from SoulSilver (`match_heartgold.py --via`, functions from the layout
-  file instead of a build); it has not been run in the program yet, which needs the SoulSilver
-  (US) ROM to build. Negro, Negro 2 and Plata SoulSilver wait for their ROMs.
+  copy as NOT PLAYABLE. Six of the seven have theirs: Blanco (`tools/bw1/IRAS.shifts`), Blanco 2
+  (`tools/bw2/IRDS.shifts`), Negro 2 (`tools/bw2/IRES.shifts`), Platino
+  (`tools/platinum/CPUS.shifts`), Plata SoulSilver (`tools/soulsilver/soulsilver-es.json`) and Oro
+  HeartGold (`tools/soulsilver/heartgold-es.json`): 99.2% to 99.9% of their functions found, the
+  opening laid out on one screen as in the English copies, Blanco's first battle in the wide
+  battle view, the Black games' 8 MB and wider map windows on, SoulSilver's first menu skipped.
+  Negro waits for its ROM. A translation of SoulSilver loads every overlay a little higher
+  (its static data grew), so the tables without the game's code now take each overlay's load
+  address from the ROM and compare its code there. The main program's first 2 KB (the secure
+  area, encrypted in some dumps) are left out of the matching.
 - **README: a trailer at the top**, every game on every platform.
 - **The pause menu and the settings page in groups:** the pause menu is RESUME, SAVE STATE, LOAD
   STATE, FAST FORWARD, then DISPLAY, GRAPHICS and CONTROLS (each a page of its own), RESET GAME and
