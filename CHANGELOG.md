@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Battles in the widescreen view: the message box is wide enough for the Spanish questions.** The end of "¿Qué debería hacer VICTOR?" was cut off under the buttons (the box was only as wide as the English text).
+
 - **Platino, Plata SoulSilver and Oro HeartGold battles: the buttons' labels whole.** The
   buttons beside the battle took the English labels' columns from the touch screen, which cut
   the Spanish ones short (LUCHAR ended as "LUCHAF"); each label is now found where it is. A

@@ -2324,12 +2324,16 @@ int main(int argc, char** argv)
             // player's HP box which the wide battle moves to the right edge and which ends
             // at y 139) in two halves: the message box ("What will X do?") in the left half,
             // the buttons in the right half, so that the player's Pokemon and the message
-            // stay in sight. The box is its left part (the text ends by x 146 with the
-            // longest name) closed with a mirrored copy of its left edge; the buttons keep
-            // the touch screen's arrangement: FIGHT above BAG, RUN and POKeMON; the four
-            // moves two by two.
+            // stay in sight. The box is its left part closed with a mirrored copy of its left
+            // edge; the buttons keep the touch screen's arrangement: FIGHT above BAG, RUN and
+            // POKeMON; the four moves two by two.
             const float bandY = 144, bandH = 48, viewL = 128 - viewWidth / 2, viewR = 128 + viewWidth / 2;
-            const int edgeW = 10, boxW = std::min(246, (int)(viewWidth / 2) - edgeW);
+            const int edgeW = 10;
+            // The message's text must fit in the box: the English ones end by x 146 with the
+            // longest name, the Spanish ones ("¿Qué debería hacer VICTOR?") by x 163. A box
+            // narrower than its text cuts the end of it under the buttons' band.
+            const int textW = 172;
+            const int boxW = std::min(246, std::max((int)(viewWidth / 2) - edgeW, textW));
             sc.items.push_back({ 0, 0, 144, boxW, 48, viewL, bandY, 1.0f, 0, 255, false });
             Element boxEdge = { 0, 0, 144, edgeW, 48, viewL + boxW, bandY, 1.0f, 0, 255, false };
             boxEdge.flipX = true;
