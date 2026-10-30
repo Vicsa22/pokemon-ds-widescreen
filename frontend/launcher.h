@@ -539,6 +539,12 @@ inline std::vector<Setting> SettingsList()
 #endif
 #endif
     l.push_back({ "show_fps", "FPS COUNTER", onOff, "0", "SHOWS THE FRAMES A SECOND IN A CORNER." });
+    {
+        // (In steps of 10, as the pause menu's VOLUME goes; the list's font has no % sign.)
+        std::vector<std::pair<std::string, std::string>> steps;
+        for (int v = 0; v <= 100; v += 10) steps.push_back({ std::to_string(v), std::to_string(v) });
+        l.push_back({ "volume", "VOLUME", steps, "100", "HOW LOUD THE GAME IS, 0 TO 100. THE PAUSE MENU HAS IT TOO, WHILE YOU PLAY." });
+    }
 #ifdef __SWITCH__
     l.push_back({ "start_button", "START BUTTON", { { "menu", "PAUSE MENU" }, { "ds", "DS START" } }, "menu",
                   "PAUSE MENU: + OPENS THE PAUSE MENU WHILE PLAYING. DS START: + IS THE DS START BUTTON (THE GAMES HARDLY USE IT) AND + AND - TOGETHER OPEN THE MENU." });
@@ -640,7 +646,7 @@ inline const std::vector<SettingsGroup>& SettingsGroups()
 inline int GroupOf(const Setting& s)
 {
     if (!s.key) return !strcmp(s.name, "KEYS AND BUTTONS") ? 2 : 4;
-    static const char* display[] = { "view", "large_screen", "fullscreen", "smooth", "battle_buttons", "show_fps" };
+    static const char* display[] = { "view", "large_screen", "fullscreen", "smooth", "battle_buttons", "show_fps", "volume" };
     static const char* controls[] = { "start_button", "pad_start", "buttons", "pad_touch" };
     for (const char* k : display)
         if (!strcmp(s.key, k)) return 0;

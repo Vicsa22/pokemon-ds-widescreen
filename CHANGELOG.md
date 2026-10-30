@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **VOLUME**, in the pause menu (left and right change it by 10) and on the game list's settings page under DISPLAY: how loud the game is, 0 to 100.
+
 - **PC: the mouse cursor shows in borderless fullscreen while the mouse is in use**, and hides again 2.5 seconds after it stops moving (it was always hidden there, so the touch screen could not be used with the mouse). In a window it is always shown, as before.
 
 - **PC: a controller's START is the DS's START** (it opened the pause menu, which the Guide / PS button opens too). START BUTTON in the settings puts it back on the pause menu; START and SELECT together open the menu as well. On the Switch and a phone START stays on the menu, as before.

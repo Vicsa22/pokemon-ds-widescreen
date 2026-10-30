@@ -1307,6 +1307,7 @@ struct Settings
     // the bottom screen up.
     bool padTouch = false;
     bool showFps = false; // frames shown per second, in a corner
+    int volume = 100;     // the sound's loudness, 0..100 (VOLUME; the samples are scaled before SDL)
     // A controller's START (+ on the Switch) opens the pause menu instead of being the DS's
     // START, which the games hardly use (START BUTTON: PAUSE MENU or DS START). On a PC it is
     // the DS's START to begin with: there the pause menu has the controller's Guide button (PS,
@@ -1385,6 +1386,7 @@ struct Settings
             else if (k == "fps60") fps60 = v == "1";
             else if (k == "pad_touch") padTouch = v == "1";
             else if (k == "show_fps") showFps = v == "1";
+            else if (k == "volume") volume = std::clamp(atoi(v.c_str()), 0, 100);
             else if (k == "ff_low_res") ffLowRes = v == "1";
 #if defined(__SWITCH__) || defined(SSR_PHONE)
             else if (k == "start_button") startMenu = v != "ds";
@@ -1431,6 +1433,7 @@ struct Settings
         f << "fps60=" << (fps60 ? 1 : 0) << "\n";
         f << "pad_touch=" << (padTouch ? 1 : 0) << "\n";
         f << "show_fps=" << (showFps ? 1 : 0) << "\n";
+        f << "volume=" << volume << "\n";
         f << "ff_low_res=" << (ffLowRes ? 1 : 0) << "\n";
 #if defined(__SWITCH__) || defined(SSR_PHONE)
         f << "start_button=" << (startMenu ? "menu" : "ds") << "\n";
@@ -3947,7 +3950,7 @@ int main(int argc, char** argv)
     {
         M_RESUME, M_LAYOUT, M_LARGE, M_FPS60, M_FULLSCREEN, M_SMOOTH, M_WIDE, M_WIDEMAP, M_BATTLEBUTTONS,
         M_WIDELINES, M_AUTODETAIL, M_WIDEGPU, M_GPU3D, M_SHOWFPS, M_BUTTONS, M_PADTOUCH, M_EMULATION,
-        M_CONTROLS, M_STARTBTN, M_FAST, M_FFLOWRES, M_SAVESTATE, M_LOADSTATE, M_RESET, M_QUIT,
+        M_CONTROLS, M_STARTBTN, M_FAST, M_VOLUME, M_FFLOWRES, M_SAVESTATE, M_LOADSTATE, M_RESET, M_QUIT,
         M_DISPLAY, M_GRAPHICS, M_CONTROLMENU, M_BACK, M_CHEATS, M_NOTHING,
         M_CHEAT0 = 1000 // (M_CHEAT0 + i: cheat i, CHEATS)
     };
@@ -4016,6 +4019,7 @@ int main(int argc, char** argv)
             add(M_SAVESTATE, "SAVE STATE", "");
             add(M_LOADSTATE, "LOAD STATE", "");
             add(M_FAST, "FAST FORWARD", onOff(fastLock));
+            add(M_VOLUME, "VOLUME", std::to_string(cfg.volume));
             add(M_DISPLAY, "DISPLAY", "");
             add(M_GRAPHICS, "GRAPHICS", "");
             add(M_CONTROLMENU, "CONTROLS", "");
@@ -5296,6 +5300,11 @@ int main(int argc, char** argv)
             case M_SHOWFPS:
                 cfg.showFps = !cfg.showFps;
                 break;
+            case M_VOLUME:
+                // Left and right by 10; A (dir 0) up by 10, round to 0 after 100.
+                cfg.volume = dir < 0 ? std::max(0, cfg.volume - 10) : dir > 0 ? std::min(100, cfg.volume + 10)
+                           : cfg.volume >= 100 ? 0 : cfg.volume + 10;
+                break;
 #ifndef __SWITCH__
             case M_BUTTONS:
                 cfg.byLabel = !cfg.byLabel;
@@ -6444,6 +6453,9 @@ int main(int argc, char** argv)
             if (audioStretch.Stretching() && speed == 1) slowdown *= 1.0 + 0.5 * (4800 - queued) / 4800.0;
             audioOut.clear();
             audioStretch.Process(audioBuf.data(), got, slowdown, audioOut);
+            // VOLUME: the samples scaled down (100 leaves them as the game made them).
+            if (cfg.volume < 100)
+                for (int16_t& s : audioOut) s = (int16_t)(s * cfg.volume / 100);
             // Drop audio rather than let latency grow if the queue backs up.
             if (queued < 48000 / 4 && !audioOut.empty())
                 SDL_QueueAudio(audio, audioOut.data(), (Uint32)(audioOut.size() * 2));
