@@ -10,8 +10,8 @@ contienen nada de los juegos, sólo el programa y sus tablas de direcciones.
 
 Descomprime, copia tus ROMs a la carpeta `roms` (con cualquier nombre) y abre el programa.
 Juegan: Negro, Blanco, Negro 2 y Blanco 2 en inglés; SoulSilver, HeartGold y Platinum US; y las
-copias españolas de Blanco (`IRAS`), Blanco 2 (`IRDS`), Negro 2 (`IRES`), Platino (`CPUS`), Plata
-SoulSilver (`IPGS`) y Oro HeartGold (`IPKS`). Negro en español no, a falta de su ROM.
+siete copias españolas: Negro (`IRBS`), Blanco (`IRAS`), Negro 2 (`IRES`), Blanco 2 (`IRDS`),
+Platino (`CPUS`), Plata SoulSilver (`IPGS`) y Oro HeartGold (`IPKS`).
 
 Las copias españolas aparecen con su nombre (POKEMON BLANCO 2...), guardan la partida con el
 sufijo `-es` (`saves/white2-es.sav`) y muestran la carátula de la copia inglesa.
