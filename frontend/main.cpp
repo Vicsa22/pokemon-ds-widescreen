@@ -2297,6 +2297,21 @@ int main(int argc, char** argv)
         // its messages must not be covered.
         if (cmd) battleStripUntil = frame + 20;
         else if (moves || idle) battleStripUntil = 0;
+        // What the touch screen was taken for, when it changes, for game.log: a panel laid out
+        // wrongly (a report had the commands' pieces cut from the moves panel) can be read
+        // back from these lines and the [scene] ones (--log-sections).
+        {
+            static int lastKind = -1, lastPanel = -1;
+            const int kind = cmd ? (battleFightOnly ? 2 : 1) : moves ? 3 : idle ? 0 : 4;
+            if (kind != lastKind || ptPanel != lastPanel)
+            {
+                static const char* const kinds[] = { "nothing", "the commands", "FIGHT alone", "the moves", "neither (sliding, or another panel)" };
+                fprintf(stderr, "[battle] frame %u: the touch screen shows %s (the game drew panel %d last; red %d orange %d blue %d %d %d)\n",
+                    frame, kinds[kind], ptPanel, red(128, 60), orange(40, 160), blue(40, 166), blue(128, 166), blue(216, 166));
+                lastKind = kind;
+                lastPanel = ptPanel;
+            }
+        }
         const float L = 128 - viewWidth / 2;
         auto put = [&](int sx, int sy, int sw, int sh, float x, float y, float scale) {
             sc.items.push_back({ 1, sx, sy, sw, sh, x, y, scale, 0, 255, false });
@@ -2339,7 +2354,44 @@ int main(int argc, char** argv)
             // are repeated on both sides of it to fill the width. A dark rectangle under it
             // carries its outline.
             struct Cut { int sx, sy, sw, sh, lx0, lx1, tileX, tileW; };
-            auto button = [&](const Cut& c, float dx, float dy, float dw, uint8_t drop) {
+            // The label's columns as they are on the touch screen: from the fixed ones
+            // (lx0..lx1, the English label's) outwards, every column that differs in some row
+            // from the plain tile columns, until a run of plain columns wider than the space
+            // between two letters. The Spanish copies' labels (LUCHAR, MOCHILA, HUIR) are wider
+            // than FIGHT, BAG and RUN, and the fixed columns cut them short ("LUCHAF"); the
+            // buttons' shaded ends, beyond such a run, stay in their own pieces.
+            auto labelColumns = [&](const Cut& c, int& lx0, int& lx1) {
+                auto plainColumn = [&](int x) {
+                    for (int y = c.sy; y < c.sy + c.sh; y++)
+                    {
+                        const uint32_t p = b[y * 256 + x];
+                        bool same = false;
+                        for (int t = c.tileX; t < c.tileX + c.tileW && !same; t++)
+                        {
+                            const uint32_t q = b[y * 256 + t];
+                            same = std::abs((int)((p >> 16) & 0xFF) - (int)((q >> 16) & 0xFF)) < 24 &&
+                                   std::abs((int)((p >> 8) & 0xFF) - (int)((q >> 8) & 0xFF)) < 24 &&
+                                   std::abs((int)(p & 0xFF) - (int)(q & 0xFF)) < 24;
+                        }
+                        if (!same) return false;
+                    }
+                    return true;
+                };
+                const int gap = 5;
+                lx0 = c.lx0;
+                for (int x = c.lx0 - 1, run = 0; x >= c.sx && run < gap; x--)
+                {
+                    if (plainColumn(x)) run++;
+                    else { lx0 = x; run = 0; }
+                }
+                lx1 = c.lx1;
+                for (int x = c.lx1, run = 0; x < c.sx + c.sw && run < gap; x++)
+                {
+                    if (plainColumn(x)) run++;
+                    else { lx1 = x + 1; run = 0; }
+                }
+            };
+            auto button = [&](const Cut& c, float dx, float dy, float dw, uint8_t drop, bool findLabel) {
                 const float scl = rowH / c.sh;
                 // (Sized exactly, not to whole base pixels, so that the edges of buttons
                 // above one another line up.)
@@ -2360,11 +2412,15 @@ int main(int argc, char** argv)
                 // the label over them. (Once repeated a few pixels at a time: some 90 pieces a
                 // button, each its own picture to upload, which on the Switch dropped the frame
                 // rate whenever a battle waited for a command.)
+                int lx0 = c.lx0, lx1 = c.lx1;
+                if (findLabel) labelColumns(c, lx0, lx1);
+                // (A label wider than the button, if ever: the fixed columns, cut short.)
+                if ((lx1 - lx0) * scl > dw) { lx0 = c.lx0; lx1 = c.lx1; }
                 piece(c.tileX, c.tileW, dx);
                 sc.items.back().stretchX = dw / (c.tileW * scl);
-                piece(c.sx, c.lx0 - c.sx, dx);
-                piece(c.lx1, c.sx + c.sw - c.lx1, dx + dw - (c.sx + c.sw - c.lx1) * scl);
-                piece(c.lx0, c.lx1 - c.lx0, dx + (dw - (c.lx1 - c.lx0) * scl) / 2);
+                if (lx0 > c.sx) piece(c.sx, lx0 - c.sx, dx);
+                if (lx1 < c.sx + c.sw) piece(lx1, c.sx + c.sw - lx1, dx + dw - (c.sx + c.sw - lx1) * scl);
+                piece(lx0, lx1 - lx0, dx + (dw - (lx1 - lx0) * scl) / 2);
             };
             if (cmd)
             {
@@ -2379,12 +2435,12 @@ int main(int argc, char** argv)
                                                { 188, 154, 56, 33, 192, 241, 188, 4 }, { 100, 162, 56, 30, 118, 139, 102, 4 } };
                 const Cut* cut = pt.on ? ptCuts : cuts;
                 const float cellW = (innerW - 2 * gap) / 3;
-                button(cut[0], innerX, rowY, 2 * cellW + gap, 0);                           // FIGHT
+                button(cut[0], innerX, rowY, 2 * cellW + gap, 0, true);                           // FIGHT
                 if (!battleFightOnly)
                 {
-                    button(cut[1], innerX, row2Y, cellW, 0);                                    // BAG
-                    button(cut[2], innerX + 2 * (cellW + gap), row2Y, innerW - 2 * (cellW + gap), 0); // POKeMON
-                    button(cut[3], innerX + cellW + gap, row2Y, cellW, 0);                      // RUN
+                    button(cut[1], innerX, row2Y, cellW, 0, true);                                    // BAG
+                    button(cut[2], innerX + 2 * (cellW + gap), row2Y, innerW - 2 * (cellW + gap), 0, true); // POKeMON
+                    button(cut[3], innerX + cellW + gap, row2Y, cellW, 0, true);                      // RUN
                 }
                 // The party: the balls on the touch screen's top row (a ball for each
                 // Pokemon, a grey dot for an empty place; sprites, taken without their
@@ -2422,7 +2478,8 @@ int main(int argc, char** argv)
                     // band just inside its sides repeated.)
                     const Cut c = pt.on ? Cut{ slotX[i] + 2, slotY[i] + 10, 122, 40, slotX[i] + 14, slotX[i] + 112, slotX[i] + 5, 4 }
                                         : Cut{ slotX[i], slotY[i] + 9, 126, 38, slotX[i] + 15, slotX[i] + 109, slotX[i] + 12, 3 };
-                    button(c, innerX + (i & 1) * (cellW + gap), (i >> 1) ? row2Y : rowY, (i & 1) ? innerW - cellW - gap : cellW, LAYER_BG2);
+                    // (The moves' fixed columns already take nearly the whole button.)
+                    button(c, innerX + (i & 1) * (cellW + gap), (i >> 1) ? row2Y : rowY, (i & 1) ? innerW - cellW - gap : cellW, LAYER_BG2, false);
                 }
             }
             // The chosen button is outlined in white and the others are shaded, so that the
@@ -6204,7 +6261,12 @@ int main(int argc, char** argv)
             }
             else
             {
-                if (pendingName != picked.name) pending = 0;
+                // (Between the battle's own layouts the count goes on through a change of the
+                // layout asked for: asked for in turns, two of them would otherwise never
+                // replace the one on screen, which went on cutting its buttons from a touch
+                // screen that had moved on to another panel.)
+                const bool battleToBattle = shownName.compare(0, 6, "battle") == 0 && !strncmp(picked.name, "battle", 6);
+                if (pendingName != picked.name && !battleToBattle) pending = 0;
                 pendingName = picked.name;
                 int need = shownName == "bottom" && fieldNow ? 1 :
                     shownName == "battle-menu" && (pendingName == "top" || pendingName == "battle") ? 40 :

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Platino, Plata SoulSilver and Oro HeartGold battles: the buttons' labels whole.** The
+  buttons beside the battle took the English labels' columns from the touch screen, which cut
+  the Spanish ones short (LUCHAR ended as "LUCHAF"); each label is now found where it is. A
+  battle's layouts can no longer get stuck on the buttons of a panel the touch screen has
+  moved on from (cut from the moves panel, the command buttons showed scraps of SALIR and the
+  moves' PP); and game.log says which panel the touch screen was taken for, with what the
+  game drew last, each time that changes.
 - **The Spanish copies of the games** (Negro, Blanco, Negro 2, Blanco 2, Plata SoulSilver, Oro
   HeartGold and Platino): the program knows them by their game codes, lists them by their
   Spanish names, gives each its own save (`black2-es.sav`, ...) and shows them the English copy's
