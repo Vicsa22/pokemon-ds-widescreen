@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **PC: the mouse cursor shows in borderless fullscreen while the mouse is in use**, and hides again 2.5 seconds after it stops moving (it was always hidden there, so the touch screen could not be used with the mouse). In a window it is always shown, as before.
+
 - **PC: a controller's START is the DS's START** (it opened the pause menu, which the Guide / PS button opens too). START BUTTON in the settings puts it back on the pause menu; START and SELECT together open the menu as well. On the Switch and a phone START stays on the menu, as before.
 
 - **Widescreen view indoors: no streak from a room's corner.** Standing at the side of a room (a Pokémon Center, Elm's lab), the foot of its wall and its floor were drawn out to the edge of the view as a dark band. Only what the game draws beside the screen over most of the picture (the ground, a flash) is continued to the edge now.

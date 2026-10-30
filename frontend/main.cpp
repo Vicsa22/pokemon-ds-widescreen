@@ -4142,6 +4142,11 @@ int main(int argc, char** argv)
     bool running = true;
     bool mouseDown = false;
     int mouseX = 0, mouseY = 0;
+    // When the mouse last moved, clicked or scrolled (SDL_GetTicks). In a window the cursor is
+    // always shown; in borderless fullscreen it is hidden, but comes back for a few seconds
+    // whenever the mouse is used, so that the touch screen can be used with the mouse there
+    // (issue #8: the cursor was invisible in fullscreen).
+    uint32_t mouseSeenAt = 0;
     // On-screen controls (touch screens): shown while no controller is connected.
     TouchPad touchPad;
     bool touchPadUsed = false, touchMenuHeld = false, prevTouchMenu = false;
@@ -4809,7 +4814,7 @@ int main(int argc, char** argv)
                     {
                         cfg.fullscreen = !cfg.fullscreen;
                         SDL_SetWindowFullscreen(window, cfg.fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-                        SDL_ShowCursor(cfg.fullscreen ? SDL_DISABLE : SDL_ENABLE);
+                        // (The cursor follows each frame: see mouseSeenAt.)
                     }
                 }
                 else if (ev.type == SDL_WINDOWEVENT && ev.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
@@ -4823,8 +4828,13 @@ int main(int argc, char** argv)
                     cfg.windowH = ev.window.data2;
                 }
 #endif
-                else if (ev.type == SDL_MOUSEBUTTONDOWN && ev.button.button == SDL_BUTTON_LEFT) mouseDown = true;
+                else if (ev.type == SDL_MOUSEBUTTONDOWN && ev.button.button == SDL_BUTTON_LEFT)
+                {
+                    mouseDown = true;
+                    mouseSeenAt = SDL_GetTicks();
+                }
                 else if (ev.type == SDL_MOUSEBUTTONUP && ev.button.button == SDL_BUTTON_LEFT) mouseDown = false;
+                else if (ev.type == SDL_MOUSEMOTION || ev.type == SDL_MOUSEWHEEL) mouseSeenAt = SDL_GetTicks();
                 // (Every joystick is announced by SDL_JOYDEVICEADDED, game controllers also
                 // by SDL_CONTROLLERDEVICEADDED; Open takes each once.)
                 else if (ev.type == SDL_JOYDEVICEADDED || ev.type == SDL_CONTROLLERDEVICEADDED)
@@ -4839,6 +4849,12 @@ int main(int argc, char** argv)
                 }
             }
             SDL_GetMouseState(&mouseX, &mouseY);
+            // The cursor: shown in a window, and in fullscreen for 2.5 seconds after the mouse
+            // was last used (see mouseSeenAt).
+            {
+                const bool show = !cfg.fullscreen || SDL_GetTicks() - mouseSeenAt < 2500;
+                if ((SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE) != show) SDL_ShowCursor(show ? SDL_ENABLE : SDL_DISABLE);
+            }
             SDL_GetRendererOutputSize(renderer, &outW, &outH);
             // SDL mouse positions are window points; layout, cursor and touch use output pixels.
             // Refresh each frame for resize and movement between Retina/external displays.
@@ -5230,11 +5246,8 @@ int main(int argc, char** argv)
 #if !defined(__SWITCH__) && !defined(SSR_PHONE)
             case M_FULLSCREEN:
                 cfg.fullscreen = !cfg.fullscreen;
-                if (window)
-                {
-                    SDL_SetWindowFullscreen(window, cfg.fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-                    SDL_ShowCursor(cfg.fullscreen ? SDL_DISABLE : SDL_ENABLE);
-                }
+                if (window) SDL_SetWindowFullscreen(window, cfg.fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+                // (The cursor follows each frame: see mouseSeenAt.)
                 break;
 #endif
             case M_SMOOTH:
